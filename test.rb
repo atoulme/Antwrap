@@ -57,12 +57,9 @@ class TestAntwrap < Test::Unit::TestCase
   
   def test_unzip_task
       assert_absent @output_dir + '/foo.zip'
-      
-      ant_task('org.apache.tools.ant.taskdefs.Expand', 
-        :taskType => 'unzip',
-        :taskName => 'unzip',
-        :src => @resource_dir + '/foo.zip',
-        :dest => @output_dir)
+     
+      task = unzip(:src => @resource_dir + '/foo.zip',
+                   :dest => @output_dir).execute
         
       assert_exists @output_dir + '/jirabrowser'
   end
@@ -71,7 +68,7 @@ class TestAntwrap < Test::Unit::TestCase
       assert_absent @output_dir + '/foo.txt'
       
       copy(:file => @resource_dir + '/foo.txt', 
-           :todir => @output_dir)
+           :todir => @output_dir).execute
 
       assert_exists @output_dir + '/foo.txt'
   end
@@ -93,7 +90,7 @@ class TestAntwrap < Test::Unit::TestCase
             :fork => 'no',
             :failonerror => 'yes',
             :includes => 'foo/bar/**',
-            :excludes => 'foo/bar/baz/**')
+            :excludes => 'foo/bar/baz/**').execute
 
       assert_exists @output_dir + '/classes/foo/bar/FooBar.class'
       assert_absent @output_dir + '/classes/foo/bar/baz/FooBarBaz.class'
@@ -104,11 +101,12 @@ class TestAntwrap < Test::Unit::TestCase
       assert_absent @output_dir + '/Foo.jar'
       
       jar(:destfile => @output_dir + '/Foo.jar', 
-          :basedir => @resource_dir + '/src')
+          :basedir => @resource_dir + '/src',
+          :level => 9,
+          :duplicate => 'preserve').execute
 
       assert_exists @output_dir + '/Foo.jar'
   end
-
 
   private 
   def assert_exists(file_path)

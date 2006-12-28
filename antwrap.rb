@@ -1,5 +1,6 @@
 require 'java'
 require 'fileutils'
+require 'logger'
 include Java
 
 module ANT
@@ -31,7 +32,16 @@ class AntProject
 end
 
 module Antwrap
+  @@log = Logger.new(STDOUT)
+  @@log.level = Logger::DEBUG
   public
+  
+  def unzip(attributes)
+    attributes[:taskType] = 'unzip'
+    attributes[:taskName] = 'unzip'
+    ant_task('org.apache.tools.ant.taskdefs.Expand', attributes)    
+  end
+
   def copy(attributes)
     ant_task("org.apache.tools.ant.taskdefs.Copy", attributes)
   end
@@ -43,26 +53,26 @@ module Antwrap
   end  
 
   def javac(attributes)
+    @@log.info("javac")
     attributes[:srcdir]  = ANTTYPES::Path.new(AntProject.create, attributes[:srcdir])
     attributes[:classpath]  = ANTTYPES::Path.new(AntProject.create, attributes[:classpath])
     ant_task("org.apache.tools.ant.taskdefs.Javac", attributes)
   end  
   
   def ant_task(taskname, attributes)
+    @@log.info("ant_task")
     taskdef = make_instance(taskname)
     taskdef.send('setProject', AntProject.create)
     attributes.each do |key, value| 
-      m = make_set_method key
+      method = make_set_method(key)
       begin
-        taskdef.send(m, introspect(value)) 
+        taskdef.send(method, introspect(value)) 
       rescue  StandardError => error
-        puts "The following error occured attempting to invoke method: '#{m}' with value #{value}"
-        puts "Error: #{error}"
-        puts "Attempting to set property without introspection"
-        taskdef.send(m, value) 
+        @@log.error("Error occured attempting to invoke method: '#{method}' with value[#{value}]")
+        @@log.error("#{error}")
       end
     end
-    taskdef.execute()
+    taskdef
   end
   
   def make_set_method(name)
@@ -71,18 +81,18 @@ module Antwrap
   end
   
   def introspect(value)
-    result = value
     case
       when value.instance_of?(TrueClass) || value.instance_of?(FalseClass)
-        result = java_to_primitive value
+        return java_to_primitive(value)
       when value.instance_of?(String) && File.exists?(value)
-        result = JAVAIO::File.new(value)  
+        return JAVAIO::File.new(value)  
       when value.instance_of?(String) && (value.eql?('true') || value.eql?('on') || value.eql?('yes'))
-        result = java_to_primitive true
+        return java_to_primitive(true)
       when value.instance_of?(String) && (value.eql?('false') || value.eql?('off') || value.eql?('no'))
-        result = java_to_primitive false
+        return java_to_primitive(false)
+      else
+        return value
     end
-    result
   end
 
   private
