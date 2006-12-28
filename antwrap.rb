@@ -31,28 +31,27 @@ class AntProject
 end
 
 module Antwrap
-  
   public
-  def copy(fields)
-    ant_task("org.apache.tools.ant.taskdefs.Copy", fields)
+  def copy(attributes)
+    ant_task("org.apache.tools.ant.taskdefs.Copy", attributes)
   end
   
-  def jar(fields)
-    fields[:destFile]  = JAVAIO::File.new(fields[:destfile])
-    fields.delete_if{|key, value| key.to_s().eql?("destfile")}
-    ant_task("org.apache.tools.ant.taskdefs.Jar", fields)
+  def jar(attributes)
+    attributes[:destFile]  =  JAVAIO::File.new(attributes[:destfile])
+    attributes.delete_if{|key, value| key.to_s().eql?("destfile")}
+    ant_task("org.apache.tools.ant.taskdefs.Jar", attributes)
   end  
 
-  def javac(fields)
-    fields[:srcdir]  = ANTTYPES::Path.new(AntProject.create, fields[:srcdir])
-    fields[:classpath]  = ANTTYPES::Path.new(AntProject.create, fields[:classpath])
-    ant_task("org.apache.tools.ant.taskdefs.Javac", fields)
+  def javac(attributes)
+    attributes[:srcdir]  = ANTTYPES::Path.new(AntProject.create, attributes[:srcdir])
+    attributes[:classpath]  = ANTTYPES::Path.new(AntProject.create, attributes[:classpath])
+    ant_task("org.apache.tools.ant.taskdefs.Javac", attributes)
   end  
   
-  def ant_task(taskname, fields)
+  def ant_task(taskname, attributes)
     taskdef = make_instance(taskname)
     taskdef.send('setProject', AntProject.create)
-    fields.each do |key, value| 
+    attributes.each do |key, value| 
       m = make_set_method key
       begin
         taskdef.send(m, introspect(value)) 
@@ -78,9 +77,9 @@ module Antwrap
         result = java_to_primitive value
       when value.instance_of?(String) && File.exists?(value)
         result = JAVAIO::File.new(value)  
-      when value.instance_of?(String) && (value.eql?('true') || value.eql?('on') || value.eql?('y'))
+      when value.instance_of?(String) && (value.eql?('true') || value.eql?('on') || value.eql?('yes'))
         result = java_to_primitive true
-      when value.instance_of?(String) && (value.eql?('false') || value.eql?('off') || value.eql?('n'))
+      when value.instance_of?(String) && (value.eql?('false') || value.eql?('off') || value.eql?('no'))
         result = java_to_primitive false
     end
     result
