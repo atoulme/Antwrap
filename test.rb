@@ -7,14 +7,18 @@ class TestAntwrap < Test::Unit::TestCase
 
 
   def setup
-#    @output_dir = ENV['PWD'] + '/output'
-#    @resource_dir = ENV['PWD'] + '/test-resources'
-    @output_dir = '/Users/caleb/projects/antwrap/output'
-    @resource_dir = '/Users/caleb/projects/antwrap/test-resources'
+#   ENV is broken as of JRuby 0.9.2 but patched in 0.9.3 (see: http://jira.codehaus.org/browse/JRUBY-349)
+#   @output_dir = ENV['PWD'] + '/output'
+#   @resource_dir = ENV['PWD'] + '/test-resources'
+#   The following is a workaround
+    current_dir = java.lang.System.getProperty("user.dir")
+    @output_dir = current_dir + '/output'
+    @resource_dir = current_dir + '/test-resources'
+    
     if File.exists?(@output_dir)
       FileUtils.remove_dir(@output_dir)
-      FileUtils.mkdir(@output_dir, :mode => 0775)
     end
+    FileUtils.mkdir(@output_dir, :mode => 0775)
   end
   
   def teardown
@@ -59,12 +63,12 @@ class TestAntwrap < Test::Unit::TestCase
   end
   
   def test_unzip_task
-      assert_absent @output_dir + '/foo.zip'
+      assert_absent @output_dir + '/parent/FooBarParent.class'
      
-      task = unzip(:src => @resource_dir + '/foo.zip',
+      task = unzip(:src => @resource_dir + '/parent.jar',
                    :dest => @output_dir).execute
         
-      assert_exists @output_dir + '/jirabrowser'
+      assert_exists @output_dir + '/parent/FooBarParent.class'
   end
   
   def test_copy_task
@@ -93,7 +97,8 @@ class TestAntwrap < Test::Unit::TestCase
             :fork => 'no',
             :failonerror => 'yes',
             :includes => 'foo/bar/**',
-            :excludes => 'foo/bar/baz/**').execute
+            :excludes => 'foo/bar/baz/**',
+            :classpath => @resource_dir + '/parent.jar').execute
 
       assert_exists @output_dir + '/classes/foo/bar/FooBar.class'
       assert_absent @output_dir + '/classes/foo/bar/baz/FooBarBaz.class'

@@ -1,6 +1,8 @@
 package foo.bar;
 
-public class FooBar{
+import parent.FooBarParent;
+
+public class FooBar extends FooBarParent {
 
     public FooBar(){
     }
