@@ -1,16 +1,19 @@
 require 'antwrap.rb'
 require 'test/unit'
 require 'fileutils'
+require 'java'
 include Antwrap
 class TestAntwrap < Test::Unit::TestCase
 
 
   def setup
-    @output_dir = ENV['PWD'] + '/output'
-    @resource_dir = ENV['PWD'] + '/test-resources'
-    if File.exists? @output_dir
+#    @output_dir = ENV['PWD'] + '/output'
+#    @resource_dir = ENV['PWD'] + '/test-resources'
+    @output_dir = '/Users/caleb/projects/antwrap/output'
+    @resource_dir = '/Users/caleb/projects/antwrap/test-resources'
+    if File.exists?(@output_dir)
       FileUtils.remove_dir(@output_dir)
-      FileUtils.mkdir(@output_dir, :mode => 755)
+      FileUtils.mkdir(@output_dir, :mode => 0775)
     end
   end
   
@@ -52,7 +55,7 @@ class TestAntwrap < Test::Unit::TestCase
     assert_equal('FalseClass', result.class.name)
  
     result = introspect(@output_dir)
-    assert_equal('File', result.class.name)
+    assert_equal('Antwrap::JFile', result.class.name)
   end
   
   def test_unzip_task
@@ -79,7 +82,7 @@ class TestAntwrap < Test::Unit::TestCase
   #         debug='on'
   #         source='1.4'/>
   def test_javac_task
-      FileUtils.mkdir(@output_dir + '/classes', :mode => 755)
+      FileUtils.mkdir(@output_dir + '/classes', :mode => 0775)
       
       assert_absent @output_dir + '/classes/foo/bar/FooBar.class'
       
@@ -107,7 +110,7 @@ class TestAntwrap < Test::Unit::TestCase
 
       assert_exists @output_dir + '/Foo.jar'
   end
-
+  
   private 
   def assert_exists(file_path)
       assert(File.exists?(file_path))
