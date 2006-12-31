@@ -1,0 +1,15 @@
+<project name="antwrap" default="run-java" basedir=".">
+
+
+
+    <target name="run-java" description="Antwrap: run a trivial Java class">
+        <java classpath="output/classes:test-resources/parent.jar" classname="foo.bar.FooBar" fork="true">
+            <jvmarg value="-Dantwrap=coolio"/>
+            <arg value="argOne"/>
+            <arg value="argTwo"/>
+        </java>
+    </target>
+
+
+
+</project>

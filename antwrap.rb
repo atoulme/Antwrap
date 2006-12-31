@@ -15,6 +15,20 @@ class AntProject
   end
 end
 
+class AntTask < org.apache.tools.ant.UnknownElement
+  
+  def addChild(child)
+    getRuntimeConfigurableWrapper().addChild(child.getRuntimeConfigurableWrapper())
+    super child
+  end
+  
+  def execute
+    maybeConfigure
+    super
+  end
+  
+end
+
 module Antwrap
   private
   @@log = Logger.new(STDOUT)
@@ -103,13 +117,13 @@ module Antwrap
   
   public
   def method_missing(sym, *args)
-    if(@@standard_tasks.member?(sym))
-      ant_task(sym.to_s, args[0])    
-    else
-      super.method_missing(sym, args)
-    end
+    #    if(@@standard_tasks.member?(sym))
+    ant_task(sym.to_s, args[0])    
+    #    else
+    #      super.method_missing(sym, args)
+    #    end
   end
-
+  
   def jvm(attributes)
     @@log.info("java")
     ant_task("java", attributes)
@@ -117,7 +131,7 @@ module Antwrap
   
   def ant_task(taskname, attributes)
     @@log.debug("ant_task")
-    task = org.apache.tools.ant.UnknownElement.new(taskname);
+    task = AntTask.new(taskname);
     task.setProject(AntProject.create());
     task.setNamespace('');
     task.setQName(taskname);
@@ -128,22 +142,7 @@ module Antwrap
     attributes.each do |key, value| 
       wrapper.setAttribute(key.to_s, value)
     end
-    task.maybeConfigure
-    task
-  end
-  
-  def append_classpath(target_dir)
-    currentDir = Rake::original_dir
-    Dir::chdir(target_dir)
-    target_path = Dir::pwd
-    jars = Dir::glob("*.jar")
-    if jars.size > 0
-      jars.each {|file| cp = cp + target_path + '/' + file + path_separator}
-    else    
-      cp = cp + target_path
-    end     
-    Dir::chdir(currentDir)
-    cp      
+    return task
   end
   
 end
