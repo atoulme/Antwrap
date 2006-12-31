@@ -24,43 +24,43 @@ class TestAntwrap < Test::Unit::TestCase
   def teardown
   end
 
-  def test_make_set_method
-    assert_equal('setFoo', make_set_method('foo'))
-    assert_equal('setFoo', make_set_method(:foo))
-    assert_equal('setFooBar', make_set_method(:fooBar))
-  end
-  
-  def test_introspect
-    result = introspect('foo')
-    assert_equal('String', result.class.name)
- 
-    result = introspect(true)
-    assert_equal('TrueClass', result.class.name)
- 
-    result = introspect('yes')
-    assert_equal('TrueClass', result.class.name)
-
-    result = introspect('on')
-    assert_equal('TrueClass', result.class.name)
-    
-    result = introspect('true')
-    assert_equal('TrueClass', result.class.name)
- 
-    result = introspect(false)
-    assert_equal('FalseClass', result.class.name)
- 
-    result = introspect('off')
-    assert_equal('FalseClass', result.class.name)
- 
-    result = introspect('no')
-    assert_equal('FalseClass', result.class.name)
- 
-    result = introspect('false')
-    assert_equal('FalseClass', result.class.name)
- 
-    result = introspect(@output_dir)
-    assert_equal('Antwrap::JFile', result.class.name)
-  end
+#  def test_make_set_method
+#    assert_equal('setFoo', make_set_method('foo'))
+#    assert_equal('setFoo', make_set_method(:foo))
+#    assert_equal('setFooBar', make_set_method(:fooBar))
+#  end
+#  
+#  def test_introspect
+#    result = introspect('foo')
+#    assert_equal('String', result.class.name)
+# 
+#    result = introspect(true)
+#    assert_equal('TrueClass', result.class.name)
+# 
+#    result = introspect('yes')
+#    assert_equal('TrueClass', result.class.name)
+#
+#    result = introspect('on')
+#    assert_equal('TrueClass', result.class.name)
+#    
+#    result = introspect('true')
+#    assert_equal('TrueClass', result.class.name)
+# 
+#    result = introspect(false)
+#    assert_equal('FalseClass', result.class.name)
+# 
+#    result = introspect('off')
+#    assert_equal('FalseClass', result.class.name)
+# 
+#    result = introspect('no')
+#    assert_equal('FalseClass', result.class.name)
+# 
+#    result = introspect('false')
+#    assert_equal('FalseClass', result.class.name)
+# 
+#    result = introspect(@output_dir)
+#    assert_equal('Antwrap::JFile', result.class.name)
+#  end
   
   def test_unzip_task
       assert_absent @output_dir + '/parent/FooBarParent.class'
@@ -110,11 +110,43 @@ class TestAntwrap < Test::Unit::TestCase
       
       jar(:destfile => @output_dir + '/Foo.jar', 
           :basedir => @resource_dir + '/src',
-          :level => 9,
+          :level => '9',
           :duplicate => 'preserve').execute
 
       assert_exists @output_dir + '/Foo.jar'
   end
+  
+# <java classname="test.Main">
+#    <arg value="-h"/>
+#    <classpath>
+#    <pathelement location="dist/test.jar"/>
+#    <pathelement path="${java.class.path}"/>
+#    </classpath>
+# </java>
+    def test_java_task
+      FileUtils.mkdir(@output_dir + '/classes', :mode => 0775)
+      javac(:srcdir => @resource_dir + '/src', 
+        :destdir => @output_dir + '/classes',
+        :debug => 'on',
+        :verbose => 'yes',
+        :fork => 'no',
+        :failonerror => 'yes',
+        :includes => 'foo/bar/**',
+        :excludes => 'foo/bar/baz/**',
+        :classpath => @resource_dir + '/parent.jar').execute
+      
+      classpath = @output_dir + '/classes:' + @resource_dir + '/parent.jar'
+      java_task = jvm(:classname => 'foo.bar.FooBar',
+        :classpath => classpath)
+#      java_task.createArg().setValue('argOne')     
+#      java_task.createArg().setValue('argTwo')     
+#      sysProp = AntVariable.new()
+#      sysProp.setKey('antwrap')
+#      sysProp.setValue('cool')
+#      java_task.addSysproperty(sysProp)     
+      java_task.execute     
+      assert(true)
+    end
   
   private 
   def assert_exists(file_path)
