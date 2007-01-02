@@ -2,7 +2,7 @@ require 'test/unit'
 require 'fileutils'
 require 'java'
 require '../lib/antwrap.rb'
-include Antwrap
+#include Antwrap
 class TestAntwrap < Test::Unit::TestCase
   
   
@@ -33,13 +33,15 @@ class TestAntwrap < Test::Unit::TestCase
     assert_exists @output_dir + '/parent/FooBarParent.class'
   end
   
-  def test_copy_task
-    assert_absent @output_dir + '/foo.txt'
-    
+  def test_copyanddelete_task
+    file = @output_dir + '/foo.txt'
+    assert_absent file
     copy(:file => @resource_dir + '/foo.txt', 
     :todir => @output_dir).execute
-    
-    assert_exists @output_dir + '/foo.txt'
+    assert_exists file
+
+    delete(:file => file).execute
+    assert_absent file
   end
   
   #  <javac srcdir='${src}'
@@ -107,6 +109,10 @@ class TestAntwrap < Test::Unit::TestCase
     java_task.add(sysproperty(:key=> 'antwrap', :value => 'coolio'))
     
     java_task.execute     
+  end
+  
+  def test_echo_task
+    echo(:message => "Antwrap is running an Echo task", :level => 'info').execute
   end
   
   private 

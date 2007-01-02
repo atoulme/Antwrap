@@ -1,0 +1,310 @@
+<project name="kidsspace" default="compile" basedir=".">
+
+
+    <property name="common.dir" value="../common"/>
+    <property name="common.classes" value="${common.dir}/classes"/>
+    <property name="common.lib.dir" value="${common.dir}/lib"/>
+    <property name="output.dir" value="gen-output"/>
+    <property name="outputjar" value="kidsspace.jar"/>
+    <property name="distro.dir" value="distro"/>
+    <property name="manifest.file" value="MANIFEST.MF"/>
+    <property name="file" value=""/>
+    <property name="build.compiler" value="javac1.4"/>
+
+
+    <patternset id="common.jars">
+        <include name="standard.jar"/>
+        <include name="jstl.jar"/>
+        <include name="mail.jar"/>
+        <include name="ojdbc14.jar"/>
+        <include name="ssce.jar"/>
+        <include name="ultrasearch_query.jar"/>
+        <include name="xercesImpl.jar"/>
+        <include name="xml-apis.jar"/>
+        <include name="log4j-1.2.13.jar"/>
+    </patternset>
+
+    <target name="init">
+        <mkdir dir="classes"/>
+        <mkdir dir="lib"/>
+    </target>
+
+    <target name="clean">
+        <delete dir="classes" failonerror="false"/>
+        <delete dir="${distro.dir}"/>
+        <delete file="${outputjar}"/>
+        <delete file="${output.dir}"/>
+    </target>
+
+    <path id="common.class.path">
+        <fileset dir="${common.dir}/lib">
+            <include name="**/*.jar"/>
+        </fileset>
+        <pathelement location="${common.classes}"/>
+    </path>
+
+    <path id="kidsspace.class.path">
+        <pathelement location="classes"/>
+        <pathelement location="config"/>
+    </path>
+
+    <path id="testing.class.path">
+        <pathelement location="test/testresources"/>
+        <pathelement location="${common.dir}/test/testresources"/>
+    </path>
+
+    <target name="compile.common">
+        <ant dir="${common.dir}" target="compile"/>
+    </target>
+
+    <target name="compile" depends="clean, init, compile.common">
+       <javac verbose="true" srcdir="src" destdir="classes" classpathref="common.class.path"/>
+    </target>
+
+    <target name="compile-tests" depends="compile">
+
+        <javac srcdir="test" destdir="classes">
+            <classpath refid="common.class.path"/>
+            <classpath refid="kidsspace.class.path"/>
+        </javac>
+        <ant dir="${common.dir}" target="compile-tests"/>
+    </target>
+
+    <target name="manifest" unless="manfist.generated">
+        <tstamp/>
+        <manifest file="${manifest.file}">
+            <attribute name="Built-By" value="${user.name}"/>
+            <attribute name="Built-On" value="${TODAY}"/>
+        </manifest>
+        <property name="manfist.generated" value="true"/>
+    </target>
+
+    <target name="make-jar" depends="compile, manifest">
+        <jar destfile="${outputjar}">
+            <fileset dir="classes" excludes="**/*Test.class"/>
+            <fileset dir="${common.classes}"/>
+        </jar>
+    </target>
+
+    <target name="distro">
+        <mkdir dir="${distro.dir}"/>
+    </target>
+
+    <target name="scientist-distro" depends="clean, distro, make-jar">
+        <tstamp/>
+        <copy file="scripts/runScientistDBConverter.sh" todir="${distro.dir}" overwrite="true"/>
+        <copy file="config/log4j.properties" todir="${distro.dir}" overwrite="true"/>
+        <copy file="config/kidsspace/development.db.properties" tofile="${distro.dir}/db.properties" overwrite="true"/>
+        <copy todir="${distro.dir}/lib" overwrite="true">
+            <fileset dir="${common.lib.dir}">
+                <include name="log4j-1.2.13.jar"/>
+                <include name="ojdbc14.jar"/>
+            </fileset>
+        </copy>
+        <copy todir="${distro.dir}" overwrite="true">
+            <fileset dir="sql">
+                <include name="SciInv*.csv"/>
+            </fileset>
+        </copy>
+        <copy file="${outputjar}" todir="${distro.dir}/lib" overwrite="true"/>
+        <zip destfile="scientistconverter.zip">
+            <zipfileset dir="${distro.dir}" prefix="scientistconverter"/>
+        </zip>
+        <antcall target="clean"/>
+    </target>
+
+
+    <target name="proddistro" depends="webdistro, distro">
+        <copy tofile="${distro.dir}/WEB-INF/web.xml" file="config/kidsspace/production.web.xml"/>
+        <copy tofile="${distro.dir}/WEB-INF/spellchecker.properties"
+              file="config/kidsspace/production.spellchecker.properties"/>
+    </target>
+
+    <target name="devdistro" depends="webdistro, distro">
+        <copy tofile="${distro.dir}/WEB-INF/web.xml" file="config/kidsspace/development.web.xml"/>
+        <copy tofile="${distro.dir}/WEB-INF/spellchecker.properties"
+              file="config/kidsspace/development.spellchecker.properties"/>
+    </target>
+
+    <target name="webdistro" depends="clean, make-jar, distro">
+
+        <mkdir dir="${distro.dir}/WEB-INF/lib"/>
+        <copy overwrite="true" todir="${distro.dir}/WEB-INF/lib">
+            <fileset dir="${common.lib.dir}">
+                <patternset refid="common.jars"/>
+            </fileset>
+            <fileset file="${outputjar}"/>
+        </copy>
+
+        <mkdir dir="${distro.dir}/WEB-INF/lex"/>
+        <copy overwrite="true" todir="${distro.dir}/WEB-INF/lex">
+            <fileset dir="config/kidsspace/lex/">
+                <include name="*.tlx"/>
+                <include name="*.clx"/>
+            </fileset>
+        </copy>
+
+    </target>
+
+    <target name="scientist-conversion-development"
+            description="Inserts data from the specified csv files into the development database">
+        <property name="database.properties" value="config/kidsspace/development.db.properties"/>
+        <antcall target="scientist-conversion"/>
+    </target>
+
+    <target name="scientist-conversion-production"
+            description="Inserts data from the specified csv files into the production database">
+        <property name="database.properties" value="config/kidsspace/production.db.properties"/>
+        <antcall target="scientist-conversion"/>
+    </target>
+
+    <target name="scientist-conversion" depends="compile" if="database.properties"
+            description="Inserts data from the specified csv files into the database. Cannot be run in isolation. The 'database.properties' property must be set.">
+        <java classname="com.zincroe.kidsspace.util.ScientistInventorDBConverter" fork="true">
+            <classpath refid="common.class.path"/>
+            <classpath refid="kidsspace.class.path"/>
+            <jvmarg value="-Dlog4j.configuration=log4j.properties"/>
+            <arg value="books=sql/SciInvBooks.csv"/>
+            <arg value="bios=sql/SciInvAuthors.csv"/>
+            <arg value="fields=sql/SciInvFields.csv"/>
+            <arg value="dbprops=${database.properties}"/>
+            <arg value="audience=Children"/>
+        </java>
+    </target>
+
+    <target name="alltests" depends="compile-tests">
+        <junit printsummary="yes" haltonfailure="no">
+            <classpath refid="common.class.path"/>
+            <classpath refid="kidsspace.class.path"/>
+            <classpath refid="testing.class.path"/>
+
+
+            <batchtest fork="yes">
+                <fileset dir="test">
+                    <include name="**/*Test*.java"/>
+                </fileset>
+                <fileset dir="${common.dir}/test">
+                    <include name="**/*Test*.java"/>
+                </fileset>
+            </batchtest>
+        </junit>
+    </target>
+
+    <target name="upload-dev-server" depends="devdistro">
+        <ftp server="tpltst01.tpl.toronto.on.ca" userid="root" password=";vwebinfra;"
+             remotedir="/opt/bea3/user_projects/zincroe/ksDomain/applications/kidsEAR/kidsWEB"
+             verbose="yes" action="send" passive="yes">
+            <fileset dir="${distro.dir}"/>
+        </ftp>
+    </target>
+
+    <target name="upload-prod-server" depends="proddistro">
+        <!-- Production webapp runs in a cluster so we need to upload to 2 machines -->
+        <ftp server="tplapp01.tpl.toronto.on.ca" userid="weblogic" password="password"
+             remotedir="/u01/bea/applications/tpldomain/kidsspace/kidsWEB"
+             verbose="yes" action="send" passive="yes">
+            <fileset dir="${distro.dir}"/>
+        </ftp>
+        <ftp server="tplapp02.tpl.toronto.on.ca" userid="weblogic" password="password"
+             remotedir="/u01/bea/applications/tpldomain/kidsspace/kidsWEB"
+             verbose="yes" action="send" passive="yes">
+            <fileset dir="${distro.dir}"/>
+        </ftp>
+    </target>
+
+    <target name="gen-dev-pf" depends="clean, compile">
+        <mkdir dir="${output.dir}"/>
+        <java classname="com.zincroe.kidsspace.data.KidsSpaceCategoryFetcher"
+              fork="true" failonerror="true">
+            <classpath refid="common.class.path"/>
+            <classpath refid="kidsspace.class.path"/>
+            <jvmarg value="-Xdebug" />
+            <jvmarg value="-Xnoagent"/>
+            <jvmarg value="-Djava.compiler=NONE"/>
+            <jvmarg value="-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005"/>
+            <jvmarg value="-DlogLevel=#{$debuglevel}"/>
+            <jvmarg value="-Dtemplate.scheme=master"/>
+            <jvmarg value="-Ddisplay.hidden=true"/>
+            <jvmarg value="-Dinteractive"/>
+            <jvmarg value="-Drun.mode=development"/>
+            <jvmarg value="-Dvelocity.props=config/kidsspace/velocity.properties"/>
+            <jvmarg value="-Xms512m"/>
+            <jvmarg value="-Xmx1024m"/>
+            <jvmarg value="-Dlog4j.configuration=log4j.properties" />
+            <arg value="${output.dir}"/>
+            <arg value="${basedir}/images"/>
+            <arg value="${basedir}/config/kidsspace/development.db.properties"/>
+        </java>
+    </target>
+    <target name="gen-prod-pf" depends="clean, compile">
+        <mkdir dir="${output.dir}"/>
+        <java classname="com.zincroe.kidsspace.data.KidsSpaceCategoryFetcher"
+              fork="true" failonerror="true">
+            <classpath refid="common.class.path"/>
+            <classpath refid="kidsspace.class.path"/>
+            <jvmarg value="-Xdebug" />
+            <jvmarg value="-Xnoagent" />
+            <jvmarg value="-Djava.compiler=NONE" />
+            <jvmarg value="-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005" />
+            <jvmarg value="-DlogLevel=debug" />
+            <jvmarg value="-Ddisplay.hidden=true" />
+            <jvmarg value="-Dtemplate.scheme=master"/>            
+            <jvmarg value="-Dinteractive" />
+            <jvmarg value="-Dvelocity.props=config/kidsspace/velocity.properties" />
+             <jvmarg value="-Xms512m" />
+            <jvmarg value="-Xmx1024m" />
+            <jvmarg value="-Dlog4j.configuration=log4j.properties" />
+
+            <arg value="${output.dir}"/>
+            <arg value="${basedir}/images"/>
+            <arg value="${basedir}/config/kidsspace/production.db.properties"/>
+        </java>
+    </target>
+
+    <target name="upload-dev-jar" depends="make-jar">
+        <upload-jar-OHQ/>
+        <telnet.and.copy.jar destination="/u01/bea/collagebin/kidslib/development"/>
+    </target>
+
+    <target name="upload-prod-jar" depends="make-jar">
+        <upload-jar-OHQ/>
+        <telnet.and.copy.jar destination="/u01/bea/collagebin/kidslib/production"/>
+    </target>
+
+    <target name="upload">
+        <upload-jar-OHQ jarfile="${file}" />
+    </target>
+
+    <macrodef name="upload-jar-OHQ">
+        <attribute name="jarfile" default="${outputjar}"/>
+        <attribute name="remotedir" default="/u01/OHQ"/>
+        <attribute name="server" default="tpltst01.tpl.toronto.on.ca"/>
+        <attribute name="userid" default="zincroe"/>
+        <attribute name="password" default="z1ncr0e"/>
+
+        <sequential>
+            <ftp server="@{server}" userid="@{userid}" password="@{password}"
+                 remotedir="@{remotedir}"
+                 verbose="yes" action="send" passive="yes">
+                <fileset file="@{jarfile}"/>
+            </ftp>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="telnet.and.copy.jar">
+        <attribute name="jarfile" default="${outputjar}"/>
+        <attribute name="destination"/>
+        <attribute name="server" default="tplapp10.tpl.toronto.on.ca"/>
+        <attribute name="userid" default="root"/>
+        <attribute name="password" default=";vwebinfra;"/>
+        <sequential>
+            <telnet server="@{server}" userid="@{userid}" password="@{password}">
+                <read>#</read>
+                <write>cp /u01/OHQ/@{jarfile} @{destination}</write>
+                <read>#</read>
+                <write>exit</write>
+            </telnet>
+        </sequential>
+    </macrodef>
+
+</project>
