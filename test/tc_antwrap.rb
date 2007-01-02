@@ -1,7 +1,7 @@
-require 'antwrap.rb'
 require 'test/unit'
 require 'fileutils'
 require 'java'
+require '../lib/antwrap.rb'
 include Antwrap
 class TestAntwrap < Test::Unit::TestCase
   
@@ -12,8 +12,8 @@ class TestAntwrap < Test::Unit::TestCase
     #   @resource_dir = ENV['PWD'] + '/test-resources'
     #   The following is a workaround
     current_dir = java.lang.System.getProperty("user.dir")
-    @output_dir = current_dir + '/output'
-    @resource_dir = current_dir + '/test-resources'
+    @output_dir = current_dir + '/test/output'
+    @resource_dir = current_dir + '/test/test-resources'
     
     if File.exists?(@output_dir)
       FileUtils.remove_dir(@output_dir)
