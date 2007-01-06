@@ -2,11 +2,11 @@ require 'test/unit'
 require 'fileutils'
 require 'java'
 require '../lib/antwrap.rb'
-#include Antwrap
+
 class TestAntwrap < Test::Unit::TestCase
   
-  
   def setup
+    @ant = Ant.new
     #   ENV is broken as of JRuby 0.9.2 but patched in 0.9.3 (see: http://jira.codehaus.org/browse/JRUBY-349)
     #   @output_dir = ENV['PWD'] + '/output'
     #   @resource_dir = ENV['PWD'] + '/test-resources'
@@ -22,12 +22,12 @@ class TestAntwrap < Test::Unit::TestCase
   end
   
   def teardown
+  
   end
   
   def test_unzip_task
     assert_absent @output_dir + '/parent/FooBarParent.class'
-    
-    task = unzip(:src => @resource_dir + '/parent.jar',
+    task = @ant.unzip(:src => @resource_dir + '/parent.jar',
     :dest => @output_dir).execute
     
     assert_exists @output_dir + '/parent/FooBarParent.class'
@@ -36,11 +36,11 @@ class TestAntwrap < Test::Unit::TestCase
   def test_copyanddelete_task
     file = @output_dir + '/foo.txt'
     assert_absent file
-    copy(:file => @resource_dir + '/foo.txt', 
+    @ant.copy(:file => @resource_dir + '/foo.txt', 
     :todir => @output_dir).execute
     assert_exists file
 
-    delete(:file => file).execute
+    @ant.delete(:file => file).execute
     assert_absent file
   end
   
@@ -54,7 +54,7 @@ class TestAntwrap < Test::Unit::TestCase
     
     assert_absent @output_dir + '/classes/foo/bar/FooBar.class'
     
-    javac(:srcdir => @resource_dir + '/src', 
+    @ant.javac(:srcdir => @resource_dir + '/src', 
     :destdir => @output_dir + '/classes',
     :debug => 'on',
     :verbose => 'yes',
@@ -72,7 +72,7 @@ class TestAntwrap < Test::Unit::TestCase
   def test_jar_task
     assert_absent @output_dir + '/Foo.jar'
     
-    jar(:destfile => @output_dir + '/Foo.jar', 
+    @ant.jar(:destfile => @output_dir + '/Foo.jar', 
     :basedir => @resource_dir + '/src',
     :level => '9',
     :duplicate => 'preserve').execute
@@ -89,7 +89,7 @@ class TestAntwrap < Test::Unit::TestCase
   # </java>
   def test_java_task
     FileUtils.mkdir(@output_dir + '/classes', :mode => 0775)
-    javac(:srcdir => @resource_dir + '/src',  
+    @ant.javac(:srcdir => @resource_dir + '/src',  
           :destdir => @output_dir + '/classes',
           :debug => 'on',
           :verbose => 'yes',
@@ -101,19 +101,40 @@ class TestAntwrap < Test::Unit::TestCase
     
     classpath = @output_dir + '/classes:' + @resource_dir + '/parent.jar'
     
-    java_task = jvm(:classname => 'foo.bar.FooBar', :classpath => classpath,
+    java_task = @ant.jvm(:classname => 'foo.bar.FooBar', :classpath => classpath,
                     :fork => 'no') 
-    java_task.add(arg(:value => 'argOne'))
-    java_task.add(arg(:value => 'argTwo'))
-    java_task.add(jvmarg(:value => 'server'))
-    java_task.add(sysproperty(:key=> 'antwrap', :value => 'coolio'))
+    java_task.add(@ant.arg(:value => 'argOne'))
+    java_task.add(@ant.arg(:value => 'argTwo'))
+    java_task.add(@ant.jvmarg(:value => 'server'))
+    java_task.add(@ant.sysproperty(:key=> 'antwrap', :value => 'coolio'))
     
     java_task.execute     
   end
   
   def test_echo_task
-    echo(:message => "Antwrap is running an Echo task", :level => 'info').execute
+    @ant.echo(:message => "Antwrap is running an Echo task", :level => 'info').execute
   end
+ 
+  def test_mkdir_task
+    dir = @output_dir + '/foo'
+    
+    assert_absent dir
+    
+    @ant.mkdir(:dir => dir).execute
+    
+    assert_exists dir
+  end 
+  
+  def test_mkdir_task_with_property
+    dir = @output_dir + '/foo'
+    
+    assert_absent dir
+    
+    @ant.get_project().setNewProperty("outputProperty", dir )
+    @ant.mkdir(:dir => "${outputProperty}").execute
+    
+    assert_exists dir
+  end 
   
   private 
   def assert_exists(file_path)

@@ -29,7 +29,7 @@ class AntTask < org.apache.tools.ant.UnknownElement
   
 end
 
-module Antwrap
+class Ant
   private
   @@log = Logger.new(STDOUT)
   @@log.level = Logger::DEBUG
@@ -115,10 +115,21 @@ module Antwrap
   :nice => 'org.apache.tools.ant.taskdefs.Nice',
   :length => 'org.apache.tools.ant.taskdefs.Length']
   
+  @project = nil
+    
   public
+  def get_project()
+    if @project == nil
+      @project= org.apache.tools.ant.Project.new
+      @project.init
+    end
+    return @project
+  end
+  
   def method_missing(sym, *args)
     #    if(@@standard_tasks.member?(sym))
-    ant_task(sym.to_s, args[0])    
+    @@log.debug("method_missing sym[#{sym.to_s}]")
+    create_task(sym.to_s, args[0])    
     #    else
     #      super.method_missing(sym, args)
     #    end
@@ -126,13 +137,18 @@ module Antwrap
   
   def jvm(attributes)
     @@log.info('jvm')
-    ant_task('java', attributes)
+    create_task('java', attributes)
+  end  
+
+  def mkdir(attributes)
+    @@log.info('jvm')
+    create_task('mkdir', attributes)
   end  
   
-  def ant_task(taskname, attributes)
-    @@log.debug('ant_task')
+  def create_task(taskname, attributes)
+    @@log.debug('create_task')
     task = AntTask.new(taskname);
-    task.setProject(AntProject.create());
+    task.setProject(get_project());
     task.setNamespace('');
     task.setQName(taskname);
     task.setTaskType(taskname);
