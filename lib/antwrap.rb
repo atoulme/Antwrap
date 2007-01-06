@@ -3,18 +3,6 @@ require 'fileutils'
 require 'logger'
 include Java
 
-class AntProject
-  private_class_method :new
-  @@project = nil
-  def AntProject.create
-    if @@project == nil
-      @@project= org.apache.tools.ant.Project.new
-      @@project.init
-    end
-    return @@project
-  end
-end
-
 class AntTask < org.apache.tools.ant.UnknownElement
   
   def add(child)
