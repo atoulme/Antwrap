@@ -1,7 +1,7 @@
 <project name="kidsspace" default="compile" basedir=".">
 
 
-    <property name="common.dir" value="../common"/>
+    <property name="common.dir" value="/Users/caleb/projects/svn/common"/>
     <property name="common.classes" value="${common.dir}/classes"/>
     <property name="common.lib.dir" value="${common.dir}/lib"/>
     <property name="output.dir" value="gen-output"/>

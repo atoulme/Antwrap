@@ -104,7 +104,7 @@ class Ant
   :length => 'org.apache.tools.ant.taskdefs.Length']
   
   @project = nil
-    
+  
   public
   def get_project()
     if @project == nil
@@ -127,10 +127,15 @@ class Ant
     @@log.info('jvm')
     create_task('java', attributes)
   end  
-
+  
   def mkdir(attributes)
-    @@log.info('jvm')
+    @@log.info('mkdir')
     create_task('mkdir', attributes)
+  end  
+
+  def copy(attributes)
+    @@log.info('copy')
+    create_task('copy', attributes)
   end  
   
   def create_task(taskname, attributes)
@@ -143,8 +148,10 @@ class Ant
     task.setTaskName(taskname);
     
     wrapper = org.apache.tools.ant.RuntimeConfigurable.new(task, task.getTaskName());
-    attributes.each do |key, value| 
-      wrapper.setAttribute(key.to_s, value)
+    if(attributes != nil)
+      attributes.each do |key, value| 
+        wrapper.setAttribute(key.to_s, value)
+      end
     end
     return task
   end

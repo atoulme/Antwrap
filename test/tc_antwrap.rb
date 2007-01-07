@@ -67,6 +67,37 @@ class TestAntwrap < Test::Unit::TestCase
     assert_exists @output_dir + '/classes/foo/bar/FooBar.class'
     assert_absent @output_dir + '/classes/foo/bar/baz/FooBarBaz.class'
   end
+
+  def test_javac_task_with_property
+    FileUtils.mkdir(@output_dir + '/classes', :mode => 0775)
+    
+    assert_absent @output_dir + '/classes/foo/bar/FooBar.class'
+#    <path id="common.class.path">
+#        <fileset dir="${common.dir}/lib">
+#            <include name="**/*.jar"/>
+#        </fileset>
+#        <pathelement location="${common.classes}"/>
+#    </path>
+    @ant.get_project().setNewProperty("pattern", '**/*.jar' )
+    path = @ant.path(:id => 'common.class.path')
+    fileset = @ant.fileset(:dir => @resource_dir)
+    fileset.add(@ant.include(:name => '${pattern}'))
+    path.add(fileset)
+    path.execute
+    
+    @ant.javac(:srcdir => @resource_dir + '/src', 
+    :destdir => @output_dir + '/classes',
+    :debug => 'on',
+    :verbose => 'yes',
+    :fork => 'no',
+    :failonerror => 'yes',
+    :includes => 'foo/bar/**',
+    :excludes => 'foo/bar/baz/**',
+    :classpathref => 'common.class.path').execute
+    
+    assert_exists @output_dir + '/classes/foo/bar/FooBar.class'
+    assert_absent @output_dir + '/classes/foo/bar/baz/FooBarBaz.class'
+  end
   
   #  <jar destfile='${dist}/lib/app.jar' basedir='${build}/classes'/>
   def test_jar_task
