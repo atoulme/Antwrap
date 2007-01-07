@@ -1,0 +1,12 @@
+JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Versions/1.5.0/Home/
+ANT_HOME=/Users/caleb/tools/apache-ant-1.7.0
+JRUBY_HOME=/Users/caleb/tools/jruby-0.9.2 
+
+JRAKE_CLASSPATH=
+for jarfile in $ANT_HOME/lib/*.jar
+do
+    JRAKE_CLASSPATH=$JRAKE_CLASSPATH:$jarfile
+done
+JRAKE_CLASSPATH=$CLASSPATH:$JRAKE_CLASSPATH
+
+env -i CLASSPATH=$JRAKE_CLASSPATH JAVA_HOME=$JAVA_HOME ${JRUBY_HOME}/bin/jruby ${JRUBY_HOME}/bin/rake $*
