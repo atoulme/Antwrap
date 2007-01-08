@@ -110,6 +110,13 @@ class Ant
     if @project == nil
       @project= org.apache.tools.ant.Project.new
       @project.init
+      logger = org.apache.tools.ant.DefaultLogger.new
+#      logger.setMessageOutputLevel(org.apache.tools.ant.Project.MSG_INFO);
+      logger.setMessageOutputLevel(2);
+      logger.setOutputPrintStream(java.lang.System.out);
+      logger.setErrorPrintStream(java.lang.System.err);
+      logger.setEmacsMode(false);
+      @project.addBuildListener(logger)
     end
     return @project
   end

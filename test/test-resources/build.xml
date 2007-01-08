@@ -225,7 +225,7 @@
             <jvmarg value="-DlogLevel=#{$debuglevel}"/>
             <jvmarg value="-Dtemplate.scheme=master"/>
             <jvmarg value="-Ddisplay.hidden=true"/>
-            <jvmarg value="-Dinteractive"/>
+            <!--<jvmarg value="-Dinteractive"/>-->
             <jvmarg value="-Drun.mode=development"/>
             <jvmarg value="-Dvelocity.props=config/kidsspace/velocity.properties"/>
             <jvmarg value="-Xms512m"/>
