@@ -80,8 +80,7 @@ class TestAntwrap < Test::Unit::TestCase
 #    </path>
     @ant.get_project().setNewProperty("pattern", '**/*.jar' )
     path = @ant.path(:id => 'common.class.path')
-    fileset = @ant.fileset(:dir => @resource_dir)
-    fileset.add(@ant.include(:name => '${pattern}'))
+    fileset = @ant.fileset({:dir => @resource_dir}, @ant.include(:name => '${pattern}'))
     path.add(fileset)
     path.execute
     
@@ -132,13 +131,13 @@ class TestAntwrap < Test::Unit::TestCase
     
     classpath = @output_dir + '/classes:' + @resource_dir + '/parent.jar'
     
-    java_task = @ant.jvm(:classname => 'foo.bar.FooBar', :classpath => classpath,
-                    :fork => 'no') 
-    java_task.add(@ant.arg(:value => 'argOne'))
-    java_task.add(@ant.arg(:value => 'argTwo'))
-    java_task.add(@ant.jvmarg(:value => 'server'))
-    java_task.add(@ant.sysproperty(:key=> 'antwrap', :value => 'coolio'))
-    
+    java_task = @ant.jvm({:classname => 'foo.bar.FooBar', 
+                          :classpath => classpath,
+                          :fork => 'no'}, 
+                          @ant.arg(:value => 'argOne'),
+                          @ant.arg(:value => 'argTwo'),  
+                          @ant.jvmarg(:value => 'server'),
+                          @ant.sysproperty(:key=> 'antwrap', :value => 'coolio')) 
     java_task.execute     
   end
   

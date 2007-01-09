@@ -41,26 +41,30 @@ class Ant
   
   def method_missing(sym, *args)
     begin
-      create_task(sym.to_s, args[0])    
+      if (args[1] == nil)
+        create_task(sym.to_s, args[0])    
+      elsif(args[1] != nil)
+        create_task(sym.to_s, args[0], args[1])    
+      end
     rescue
       @@log.error("Ant.method_missing sym[#{sym.to_s}]")
       super.method_missing(sym, args)
     end
   end
   
-  def jvm(attributes)
-    create_task('java', attributes)
+  def jvm(attributes, *children)
+    create_task('java', attributes, *children)
   end  
   
-  def mkdir(attributes)
-    create_task('mkdir', attributes)
+  def mkdir(attributes, *children)
+    create_task('mkdir', attributes, *children)
   end  
   
-  def copy(attributes)
-    create_task('copy', attributes)
+  def copy(attributes, *children)
+    create_task('copy', attributes, *children)
   end  
   
-  def create_task(taskname, attributes)
+  def create_task(taskname, attributes, *children)
     @@log.info("--task[#{taskname.to_s}]--")
     task = AntTask.new(taskname);
     task.setProject(get_project());
@@ -75,6 +79,9 @@ class Ant
         wrapper.setAttribute(key.to_s, value)
       end
     end
+
+    children.map {|child| task.add(child)} unless children == nil 
+
     return task
   end
   
