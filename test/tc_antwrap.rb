@@ -131,13 +131,12 @@ class TestAntwrap < Test::Unit::TestCase
     
     classpath = @output_dir + '/classes:' + @resource_dir + '/parent.jar'
     
-    java_task = @ant.jvm({:classname => 'foo.bar.FooBar', 
-                          :classpath => classpath,
-                          :fork => 'no'}, 
-                          @ant.arg(:value => 'argOne'),
-                          @ant.arg(:value => 'argTwo'),  
-                          @ant.jvmarg(:value => 'server'),
-                          @ant.sysproperty(:key=> 'antwrap', :value => 'coolio')) 
+    java_task = @ant.jvm(:classname => 'foo.bar.FooBar', :classpath => classpath,
+                        :fork => 'no') {
+                        @ant.arg(:value => 'argOne')
+                        @ant.arg(:value => 'argTwo')
+                        @ant.jvmarg(:value => 'server')
+                        @ant.sysproperty(:key=> 'antwrap', :value => 'coolio')}
     java_task.execute     
   end
   

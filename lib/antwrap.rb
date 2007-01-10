@@ -41,30 +41,26 @@ class Ant
   
   def method_missing(sym, *args)
     begin
-      if (args[1] == nil)
-        create_task(sym.to_s, args[0])    
-      elsif(args[1] != nil)
-        create_task(sym.to_s, args[0], args[1])    
-      end
+      create_task(sym.to_s, args[0])    
     rescue
       @@log.error("Ant.method_missing sym[#{sym.to_s}]")
       super.method_missing(sym, args)
     end
   end
   
-  def jvm(attributes, *children)
-    create_task('java', attributes, *children)
+  def jvm(attributes, &block)
+    create_task('java', attributes)
   end  
   
-  def mkdir(attributes, *children)
-    create_task('mkdir', attributes, *children)
+  def mkdir(attributes, &block)
+    create_task('mkdir', attributes)
   end  
   
-  def copy(attributes, *children)
-    create_task('copy', attributes, *children)
+  def copy(attributes, &block)
+    create_task('copy', attributes)
   end  
   
-  def create_task(taskname, attributes, *children)
+  def create_task(taskname, attributes=Hash.new, &block)
     @@log.info("--task[#{taskname.to_s}]--")
     task = AntTask.new(taskname);
     task.setProject(get_project());
@@ -74,13 +70,11 @@ class Ant
     task.setTaskName(taskname);
     
     wrapper = org.apache.tools.ant.RuntimeConfigurable.new(task, task.getTaskName());
-    if(attributes != nil)
-      attributes.each do |key, value| 
+    attributes.each do |key, value| 
         wrapper.setAttribute(key.to_s, value)
-      end
     end
-
-    children.map {|child| task.add(child)} unless children == nil 
+    
+    yield if block_given?
 
     return task
   end
