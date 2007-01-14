@@ -3,14 +3,16 @@ require 'fileutils'
 require 'logger'
 include Java
 
+@@log = Logger.new(STDOUT)
+@@log.level = Logger::DEBUG
 class AntTask
   private
-  attr_reader :unknown_element
-  attr_reader :project
+  attr_reader :unknown_element, :project, :taskname
   protected :unknown_element
   
   public  
   def initialize(taskname, project, attributes, proc)
+    @taskname = taskname
     @project = project
     @unknown_element = org.apache.tools.ant.UnknownElement.new(taskname)
     @unknown_element.setProject(project);
@@ -21,39 +23,54 @@ class AntTask
     
     wrapper = org.apache.tools.ant.RuntimeConfigurable.new(@unknown_element, @unknown_element.getTaskName());
     attributes.each do |key, value| 
-        wrapper.setAttribute(key.to_s, value)
+      wrapper.setAttribute(key.to_s, value)
     end
-    if (proc != nil)
-      proc.call self 
+    
+    if proc
+      "proc given for #{taskname}"
+      this = self
+      singleton_class = class << proc; self; end
+      singleton_class.module_eval{
+        @@this = this
+        def method_missing m, *a, &proc
+          @@this.send m, *a, &proc
+        end
+      }
+      proc.instance_eval &proc
     end
   end
   
   def add(child)
+    puts "adding child[#{child.taskname}] to [#{self.taskname}]"
     child_wrapper = child.unknown_element().getRuntimeConfigurableWrapper()
     @unknown_element.getRuntimeConfigurableWrapper().addChild(child_wrapper)
     @unknown_element.addChild(child.unknown_element)
   end
   
   def execute
+    begin
     @unknown_element.maybeConfigure
+    rescue
+      puts "failed maybeConfigure"
+    end
     @unknown_element.execute
   end
-
+  
   def method_missing(sym, *args)
     puts("AntTask.method_missing sym[#{sym.to_s}]")
     begin
-      child = AntTask.new(sym.to_s, project, args[0], nil)
+      proc = block_given? ? Proc.new : nil 
+      child = AntTask.new(sym.to_s, project, args[0], proc)
       add(child)
     rescue StandardError
       puts("AntTask.method_missing error:" + $!)
     end
   end  
+  
 end
 
 class Ant
   private
-  @@log = Logger.new(STDOUT)
-  @@log.level = Logger::DEBUG
   public
   def get_project()
     if @project == nil
@@ -68,7 +85,7 @@ class Ant
     end
     return @project
   end
-
+  
   def create_task(taskname, attributes, proc)
     return AntTask.new(taskname, get_project(), attributes, proc)
   end
