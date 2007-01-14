@@ -4,7 +4,9 @@ require 'java'
 require '../lib/antwrap.rb'
 
 class TestAntwrap < Test::Unit::TestCase
-  
+  def method_missing(sym, *args)
+    puts "TestAntwrap.method_missing"
+  end
   def setup
     @ant = Ant.new
     #   ENV is broken as of JRuby 0.9.2 but patched in 0.9.3 (see: http://jira.codehaus.org/browse/JRUBY-349)
@@ -80,7 +82,9 @@ class TestAntwrap < Test::Unit::TestCase
 #    </path>
     @ant.get_project().setNewProperty("pattern", '**/*.jar' )
     path = @ant.path(:id => 'common.class.path')
-    fileset = @ant.fileset({:dir => @resource_dir}, @ant.include(:name => '${pattern}'))
+    fileset = @ant.fileset(:dir => @resource_dir)
+    include = @ant.include(:name => '${pattern}')
+    fileset.add(include)
     path.add(fileset)
     path.execute
     
@@ -132,11 +136,11 @@ class TestAntwrap < Test::Unit::TestCase
     classpath = @output_dir + '/classes:' + @resource_dir + '/parent.jar'
     
     java_task = @ant.jvm(:classname => 'foo.bar.FooBar', :classpath => classpath,
-                        :fork => 'no') {
-                        @ant.arg(:value => 'argOne')
-                        @ant.arg(:value => 'argTwo')
-                        @ant.jvmarg(:value => 'server')
-                        @ant.sysproperty(:key=> 'antwrap', :value => 'coolio')}
+                        :fork => 'no') { |parent|
+                        parent.arg(:value => 'argOne')
+                        parent.arg(:value => 'argTwo')
+                        parent.jvmarg(:value => 'server')
+                        parent.sysproperty(:key=> 'antwrap', :value => 'coolio')}
     java_task.execute     
   end
   
