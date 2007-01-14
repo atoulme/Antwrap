@@ -7,8 +7,8 @@ include Java
 @@log.level = Logger::DEBUG
 class AntTask
   private
-  attr_reader :unknown_element, :project, :taskname
-  protected :unknown_element
+  attr_reader :unknown_element, :project, :taskname, :wrapper
+  protected :unknown_element, :wrapper
   
   public  
   def initialize(taskname, project, attributes, proc)
@@ -21,9 +21,11 @@ class AntTask
     @unknown_element.setTaskType(taskname);
     @unknown_element.setTaskName(taskname);
     
-    wrapper = org.apache.tools.ant.RuntimeConfigurable.new(@unknown_element, @unknown_element.getTaskName());
-    attributes.each do |key, value| 
-      wrapper.setAttribute(key.to_s, value)
+    @wrapper = org.apache.tools.ant.RuntimeConfigurable.new(@unknown_element, @unknown_element.getTaskName());
+    if attributes
+      attributes.each do |key, value| 
+        @wrapper.setAttribute(key.to_s, value)
+      end
     end
     
     if proc
@@ -41,15 +43,20 @@ class AntTask
   end
   
   def add(child)
-    puts "adding child[#{child.taskname}] to [#{self.taskname}]"
-    child_wrapper = child.unknown_element().getRuntimeConfigurableWrapper()
-    @unknown_element.getRuntimeConfigurableWrapper().addChild(child_wrapper)
-    @unknown_element.addChild(child.unknown_element)
+    puts "adding child[#{child.unknown_element().getTaskName()}] to [#{@unknown_element.getTaskName()}]"
+    #    @unknown_element.addChild(child.unknown_element())
+    #    child_wrapper = child.wrapper
+    ##    @unknown_element.getRuntimeConfigurableWrapper().addChild(child_wrapper)
+    #    @wrapper.addChild(child_wrapper)
+    @unknown_element.addChild(child.unknown_element())
+    @unknown_element.getRuntimeConfigurableWrapper().addChild(child.unknown_element().getRuntimeConfigurableWrapper())
+    #    puts "childwrapper : #{child_wrapper}"
+    #    puts "wrapper : #{@wrapper}"
   end
   
   def execute
     begin
-    @unknown_element.maybeConfigure
+      @unknown_element.maybeConfigure
     rescue
       puts "failed maybeConfigure"
     end

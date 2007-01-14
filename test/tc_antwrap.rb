@@ -80,17 +80,13 @@ class TestAntwrap < Test::Unit::TestCase
 #        </fileset>
 #        <pathelement location="${common.classes}"/>
 #    </path>
-#    @ant.get_project().setNewProperty("pattern", '**/*.jar' )
-#    path = @ant.path(:id => 'common.class.path'){
-#      fileset(:dir => @resource_dir){
-#        include(:name => '${pattern}')
-#      }
-#    }
-    path = @ant.path(:id => 'common.class.path')
-    fileset = @ant.fileset(:dir => @resource_dir)
-    include = @ant.include(:name => '${pattern}')
-    fileset.add(include)
-    path.add(fileset)
+    @ant.get_project().setNewProperty("pattern", '**/*.jar' )
+    @ant.get_project().setNewProperty("resource_dir", @resource_dir )
+    path = @ant.path(:id => 'common.class.path'){
+      fileset(:dir => '${resource_dir}'){
+        include(:name => '${pattern}')
+      }
+    }
     path.execute
     
     @ant.javac(:srcdir => @resource_dir + '/src', 
@@ -138,14 +134,18 @@ class TestAntwrap < Test::Unit::TestCase
           :excludes => 'foo/bar/baz/**',
           :classpath => @resource_dir + '/parent.jar').execute
     
-    classpath = @output_dir + '/classes:' + @resource_dir + '/parent.jar'
-    
-    java_task = @ant.jvm(:classname => 'foo.bar.FooBar', :classpath => classpath,
-                        :fork => 'no') {
-                        arg(:value => 'argOne')
-                        arg(:value => 'argTwo')
-                        jvmarg(:value => 'server')
-                        sysproperty(:key=> 'antwrap', :value => 'coolio')}
+    @ant.get_project().setNewProperty("output_dir", @output_dir )
+    @ant.get_project().setNewProperty("resource_dir", @resource_dir )
+    java_task = @ant.jvm(:classname => 'foo.bar.FooBar', :fork => 'no') {
+       arg(:value => 'argOne')
+       arg(:value => 'argTwo')
+       jvmarg(:value => 'server')
+       sysproperty(:key=> 'antwrap', :value => 'coolio')
+       classpath(){
+          pathelement(:location => '${output_dir}/classes')
+          pathelement(:location => '${resource_dir}/parent.jar')
+        }
+    }
     java_task.execute     
   end
   
