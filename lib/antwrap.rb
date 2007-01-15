@@ -4,12 +4,13 @@ require 'logger'
 include Java
 
 @@log = Logger.new(STDOUT)
-@@log.level = Logger::DEBUG
+@@log.level = Logger::INFO
+  
 class AntTask
   private
-  attr_reader :unknown_element, :project, :taskname, :wrapper
-  protected :unknown_element, :wrapper
-  
+  @@task_stack=Array.new
+  attr_reader :unknown_element, :project, :taskname
+  protected :unknown_element
   public  
   def initialize(taskname, project, attributes, proc)
     @taskname = taskname
@@ -21,65 +22,60 @@ class AntTask
     @unknown_element.setTaskType(taskname);
     @unknown_element.setTaskName(taskname);
     
-    @wrapper = org.apache.tools.ant.RuntimeConfigurable.new(@unknown_element, @unknown_element.getTaskName());
+    wrapper = org.apache.tools.ant.RuntimeConfigurable.new(@unknown_element, @unknown_element.getTaskName());
     if attributes
       attributes.each do |key, value| 
-        @wrapper.setAttribute(key.to_s, value)
+        wrapper.setAttribute(key.to_s, value)
       end
     end
     
     if proc
-      "proc given for #{taskname}"
-      this = self
+      @@log.debug("task_stack.push #{taskname} >> #{@@task_stack}") 
+      @@task_stack.push self
+
       singleton_class = class << proc; self; end
       singleton_class.module_eval{
-        @@this = this
-        def method_missing m, *a, &proc
-          @@this.send m, *a, &proc
+        def method_missing(m, *a, &proc)
+          @@task_stack.last().send(m, *a, &proc)
         end
       }
       proc.instance_eval &proc
+      @@task_stack.pop 
     end
   end
+
+  def method_missing(sym, *args)
+    @@log.debug("AntTask.method_missing sym[#{sym.to_s}]")
+    begin
+      proc = block_given? ? Proc.new : nil 
+      self.add AntTask.new(sym.to_s, project, args[0], proc)
+    rescue StandardError
+      @@log.error("AntTask.method_missing error:" + $!)
+    end
+  end  
   
   def add(child)
-    puts "adding child[#{child.unknown_element().getTaskName()}] to [#{@unknown_element.getTaskName()}]"
-    #    @unknown_element.addChild(child.unknown_element())
-    #    child_wrapper = child.wrapper
-    ##    @unknown_element.getRuntimeConfigurableWrapper().addChild(child_wrapper)
-    #    @wrapper.addChild(child_wrapper)
+    @@log.debug("adding child[#{child.unknown_element().getTaskName()}] to [#{@unknown_element.getTaskName()}]")
     @unknown_element.addChild(child.unknown_element())
     @unknown_element.getRuntimeConfigurableWrapper().addChild(child.unknown_element().getRuntimeConfigurableWrapper())
-    #    puts "childwrapper : #{child_wrapper}"
-    #    puts "wrapper : #{@wrapper}"
   end
   
   def execute
     begin
       @unknown_element.maybeConfigure
     rescue
-      puts "failed maybeConfigure"
+      @@log.error("failed maybeConfigure")
     end
     @unknown_element.execute
   end
-  
-  def method_missing(sym, *args)
-    puts("AntTask.method_missing sym[#{sym.to_s}]")
-    begin
-      proc = block_given? ? Proc.new : nil 
-      child = AntTask.new(sym.to_s, project, args[0], proc)
-      add(child)
-    rescue StandardError
-      puts("AntTask.method_missing error:" + $!)
-    end
-  end  
-  
 end
 
 class Ant
   private
   public
-  def get_project()
+  attr_reader :project
+  
+  def project()
     if @project == nil
       @project= org.apache.tools.ant.Project.new
       @project.init
@@ -94,7 +90,7 @@ class Ant
   end
   
   def create_task(taskname, attributes, proc)
-    return AntTask.new(taskname, get_project(), attributes, proc)
+    AntTask.new(taskname, project(), attributes, proc)
   end
   
   def method_missing(sym, *args)

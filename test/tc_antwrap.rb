@@ -59,7 +59,7 @@ class TestAntwrap < Test::Unit::TestCase
     @ant.javac(:srcdir => @resource_dir + '/src', 
     :destdir => @output_dir + '/classes',
     :debug => 'on',
-    :verbose => 'yes',
+    :verbose => 'no',
     :fork => 'no',
     :failonerror => 'yes',
     :includes => 'foo/bar/**',
@@ -80,8 +80,8 @@ class TestAntwrap < Test::Unit::TestCase
 #        </fileset>
 #        <pathelement location="${common.classes}"/>
 #    </path>
-    @ant.get_project().setNewProperty("pattern", '**/*.jar' )
-    @ant.get_project().setNewProperty("resource_dir", @resource_dir )
+    @ant.project().setNewProperty("pattern", '**/*.jar' )
+    @ant.project().setNewProperty("resource_dir", @resource_dir )
     path = @ant.path(:id => 'common.class.path'){
       fileset(:dir => '${resource_dir}'){
         include(:name => '${pattern}')
@@ -92,7 +92,7 @@ class TestAntwrap < Test::Unit::TestCase
     @ant.javac(:srcdir => @resource_dir + '/src', 
     :destdir => @output_dir + '/classes',
     :debug => 'on',
-    :verbose => 'yes',
+    :verbose => 'no',
     :fork => 'no',
     :failonerror => 'yes',
     :includes => 'foo/bar/**',
@@ -127,24 +127,24 @@ class TestAntwrap < Test::Unit::TestCase
     @ant.javac(:srcdir => @resource_dir + '/src',  
           :destdir => @output_dir + '/classes',
           :debug => 'on',
-          :verbose => 'yes',
+          :verbose => 'no',
           :fork => 'no',
           :failonerror => 'yes',
           :includes => 'foo/bar/**',
           :excludes => 'foo/bar/baz/**',
           :classpath => @resource_dir + '/parent.jar').execute
     
-    @ant.get_project().setNewProperty("output_dir", @output_dir )
-    @ant.get_project().setNewProperty("resource_dir", @resource_dir )
+    @ant.project().setNewProperty("output_dir", @output_dir )
+    @ant.project().setNewProperty("resource_dir", @resource_dir )
     java_task = @ant.jvm(:classname => 'foo.bar.FooBar', :fork => 'no') {
        arg(:value => 'argOne')
-       arg(:value => 'argTwo')
-       jvmarg(:value => 'server')
-       sysproperty(:key=> 'antwrap', :value => 'coolio')
        classpath(){
           pathelement(:location => '${output_dir}/classes')
           pathelement(:location => '${resource_dir}/parent.jar')
         }
+       arg(:value => 'argTwo')
+       jvmarg(:value => 'server')
+       sysproperty(:key=> 'antwrap', :value => 'coolio')
     }
     java_task.execute     
   end
@@ -168,7 +168,7 @@ class TestAntwrap < Test::Unit::TestCase
     
     assert_absent dir
     
-    @ant.get_project().setNewProperty("outputProperty", dir )
+    @ant.project().setNewProperty("outputProperty", dir )
     @ant.mkdir(:dir => "${outputProperty}").execute
     
     assert_exists dir
