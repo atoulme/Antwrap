@@ -1,6 +1,5 @@
 require 'test/unit'
 require 'fileutils'
-require 'java'
 require '../lib/antwrap.rb'
 
 class TestAntwrap < Test::Unit::TestCase
@@ -13,7 +12,7 @@ class TestAntwrap < Test::Unit::TestCase
     #   @output_dir = ENV['PWD'] + '/output'
     #   @resource_dir = ENV['PWD'] + '/test-resources'
     #   The following is a workaround
-    current_dir = java.lang.System.getProperty("user.dir")
+    current_dir = Java::java.lang.System.getProperty("user.dir")
     @output_dir = current_dir + '/test/output'
     @resource_dir = current_dir + '/test/test-resources'
     
@@ -146,7 +145,7 @@ class TestAntwrap < Test::Unit::TestCase
        jvmarg(:value => 'server')
        sysproperty(:key=> 'antwrap', :value => 'coolio')
     }
-    java_task.execute     
+    java_task.execute  
   end
   
   def test_echo_task

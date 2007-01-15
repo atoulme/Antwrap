@@ -1,7 +1,6 @@
 require 'java'
 require 'fileutils'
 require 'logger'
-include Java
 
 @@log = Logger.new(STDOUT)
 @@log.level = Logger::INFO
@@ -15,14 +14,14 @@ class AntTask
   def initialize(taskname, project, attributes, proc)
     @taskname = taskname
     @project = project
-    @unknown_element = org.apache.tools.ant.UnknownElement.new(taskname)
+    @unknown_element = Java::org.apache.tools.ant.UnknownElement.new(taskname)
     @unknown_element.setProject(project);
     @unknown_element.setNamespace('');
     @unknown_element.setQName(taskname);
     @unknown_element.setTaskType(taskname);
     @unknown_element.setTaskName(taskname);
     
-    wrapper = org.apache.tools.ant.RuntimeConfigurable.new(@unknown_element, @unknown_element.getTaskName());
+    wrapper = Java::org.apache.tools.ant.RuntimeConfigurable.new(@unknown_element, @unknown_element.getTaskName());
     if attributes
       attributes.each do |key, value| 
         wrapper.setAttribute(key.to_s, value)
@@ -48,7 +47,7 @@ class AntTask
     @@log.debug("AntTask.method_missing sym[#{sym.to_s}]")
     begin
       proc = block_given? ? Proc.new : nil 
-      self.add AntTask.new(sym.to_s, project, args[0], proc)
+      self.add(AntTask.new(sym.to_s, project, args[0], proc))
     rescue StandardError
       @@log.error("AntTask.method_missing error:" + $!)
     end
@@ -71,22 +70,16 @@ class AntTask
 end
 
 class Ant
-  private
-  public
   attr_reader :project
-  
-  def project()
-    if @project == nil
-      @project= org.apache.tools.ant.Project.new
+  def initialize()
+      @project= Java::org.apache.tools.ant.Project.new
       @project.init
-      default_logger = org.apache.tools.ant.DefaultLogger.new
+      default_logger = Java::org.apache.tools.ant.DefaultLogger.new
       default_logger.setMessageOutputLevel(2);
       default_logger.setOutputPrintStream(java.lang.System.out);
       default_logger.setErrorPrintStream(java.lang.System.err);
       default_logger.setEmacsMode(false);
       @project.addBuildListener(default_logger)
-    end
-    return @project
   end
   
   def create_task(taskname, attributes, proc)
@@ -94,11 +87,16 @@ class Ant
   end
   
   def method_missing(sym, *args)
-    begin
-      proc = block_given? ? Proc.new : nil 
-      return create_task(sym.to_s, args[0], proc)
-    rescue
-      @@log.error("Ant.method_missing sym[#{sym.to_s}]")
+    if(@@tasks.include?(sym.to_s) || @@types.include?(sym.to_s))
+      begin
+        @@log.info("Ant.method_missing sym[#{sym.to_s}]")
+        proc = block_given? ? Proc.new : nil 
+        return create_task(sym.to_s, args[0], proc)
+      rescue
+        @@log.error("Ant.method_missing sym[#{sym.to_s}]")
+      end
+    else
+        @@log.error("Not an Ant Task[#{sym.to_s}]")
     end
   end
   
@@ -117,5 +115,38 @@ class Ant
     create_task('copy', attributes, proc)
   end  
   
+  # standard ant tasks
+  # optional tasks
+  @@tasks = ['mkdir', 'javac',   'chmod', 'delete', 'copy', 'move', 'jar', 'rmic', 'cvs', 'get', 'unzip', 
+      'unjar', 'unwar', 'echo', 'javadoc', 'zip', 'gzip', 'gunzip', 'replace', 'java', 'tstamp', 'property', 
+      'xmlproperty', 'taskdef', 'ant', 'exec', 'tar', 'untar', 'available', 'filter', 'fixcrlf', 'patch', 
+      'style', 'xslt', 'touch', 'signjar', 'genkey', 'antstructure', 'execon', 'antcall', 'sql', 'mail', 
+      'fail', 'war', 'uptodate', 'apply', 'record', 'cvspass', 'typedef', 'sleep', 'pathconvert', 'ear', 
+      'parallel', 'sequential', 'condition', 'dependset', 'bzip2', 'bunzip2', 'checksum', 'waitfor', 'input', 
+      'loadfile', 'manifest', 'loadproperties', 'basename', 'dirname', 'cvschangelog', 'cvsversion', 'buildnumber', 
+      'concat', 'cvstagdiff', 'tempfile', 'import', 'whichresource', 'subant', 'sync', 'defaultexcludes', 'presetdef', 
+      'macrodef', 'nice', 'length', 
+      'image', 'script', 'netrexxc', 'renameext', 'ejbc', 'ddcreator', 'wlrun', 'wlstop', 'vssadd', 'vsscheckin', 'vsscheckout', 
+      'vsscp', 'vsscreate', 'vssget', 'vsshistory', 'vsslabel', 'ejbjar', 'mparse', 'mmetrics', 'maudit', 'junit', 'cab', 
+      'ftp', 'icontract', 'javacc', 'jjdoc', 'jjtree', 'stcheckout', 'stcheckin', 'stlabel', 'stlist', 'wljspc', 'jlink', 
+      'native2ascii', 'propertyfile', 'depend', 'antlr', 'vajload', 'vajexport', 'vajimport', 'telnet', 'csc', 'ilasm', 
+      'WsdlToDotnet', 'wsdltodotnet', 'importtypelib', 'stylebook', 'test', 'pvcs', 'p4change', 'p4delete', 'p4label', 'p4labelsync', 
+      'p4have', 'p4sync', 'p4edit', 'p4integrate', 'p4resolve', 'p4submit', 'p4counter', 'p4revert', 'p4reopen', 'p4fstat', 'javah', 
+      'ccupdate', 'cccheckout', 'cccheckin', 'ccuncheckout', 'ccmklbtype', 'ccmklabel', 'ccrmtype', 'cclock', 'ccunlock', 'ccmkbl', 
+      'ccmkattr', 'ccmkelem', 'ccmkdir', 'sound', 'junitreport', 'blgenclient', 'rpm', 'xmlvalidate', 'iplanet-ejbc', 'jdepend', 
+      'mimemail', 'ccmcheckin', 'ccmcheckout', 'ccmcheckintask', 'ccmreconfigure', 'ccmcreatetask', 'jpcoverage', 'jpcovmerge', 
+      'jpcovreport', 'p4add', 'jspc', 'replaceregexp', 'translate', 'sosget', 'soscheckin','soscheckout','soslabel', 'echoproperties', 
+      'splash', 'serverdeploy', 'jarlib-display', 'jarlib-manifest', 'jarlib-available', 'jarlib-resolve', 'setproxy', 'vbc', 'symlink', 
+      'chgrp', 'chown', 'attrib', 'scp', 'sshexec', 'jsharpc', 'rexec', 'scriptdef', 'ildasm', 
+  # deprecated ant tasks (kept for back compatibility)
+      'starteam', 'javadoc2', 'copydir', 'copyfile', 'deltree', 'rename'
+  ] 
+  
+  # different filename mappers
+  @@types = [ 'classfileset', 'description', 'dirset', 'filelist', 'fileset', 'filterchain', 'filterreader', 'filterset', 'mapper', 'redirector', 
+      'identitymapper', 'flattenmapper', 'globmapper', 'mergemapper', 'regexpmapper', 'packagemapper', 'unpackagemapper', 'compositemapper', 
+      'chainedmapper', 'filtermapper', 'path', 'patternset', 'regexp', 'substitution', 'xmlcatalog', 'extensionSet', 'extension', 'libfileset', 
+      'selector', 'zipfileset', 'scriptfilter', 'propertyset', 'assertions', 'concatfilter', 'isfileselected' 
+  ]
   
 end
