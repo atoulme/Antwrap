@@ -126,7 +126,7 @@ class Ant
     create_task('copy', attributes, proc)
   end  
   
-  def properties(props=Hash.new())
+  def add_properties(props=Hash.new())
     props.each {|key, value| project().setNewProperty(key.to_s, value) }
   end
   
