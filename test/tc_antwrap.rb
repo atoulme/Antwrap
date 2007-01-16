@@ -7,7 +7,7 @@ class TestAntwrap < Test::Unit::TestCase
     puts "TestAntwrap.method_missing"
   end
   def setup
-    @ant = Ant.new
+    @ant = Ant.new(true)
     #   ENV is broken as of JRuby 0.9.2 but patched in 0.9.3 (see: http://jira.codehaus.org/browse/JRUBY-349)
     #   @output_dir = ENV['PWD'] + '/output'
     #   @resource_dir = ENV['PWD'] + '/test-resources'
@@ -29,7 +29,7 @@ class TestAntwrap < Test::Unit::TestCase
   def test_unzip_task
     assert_absent @output_dir + '/parent/FooBarParent.class'
     task = @ant.unzip(:src => @resource_dir + '/parent.jar',
-    :dest => @output_dir).execute
+    :dest => @output_dir)
     
     assert_exists @output_dir + '/parent/FooBarParent.class'
   end
@@ -38,10 +38,10 @@ class TestAntwrap < Test::Unit::TestCase
     file = @output_dir + '/foo.txt'
     assert_absent file
     @ant.copy(:file => @resource_dir + '/foo.txt', 
-    :todir => @output_dir).execute
+    :todir => @output_dir)
     assert_exists file
 
-    @ant.delete(:file => file).execute
+    @ant.delete(:file => file)
     assert_absent file
   end
   
@@ -63,7 +63,7 @@ class TestAntwrap < Test::Unit::TestCase
     :failonerror => 'yes',
     :includes => 'foo/bar/**',
     :excludes => 'foo/bar/baz/**',
-    :classpath => @resource_dir + '/parent.jar').execute
+    :classpath => @resource_dir + '/parent.jar')
     
     assert_exists @output_dir + '/classes/foo/bar/FooBar.class'
     assert_absent @output_dir + '/classes/foo/bar/baz/FooBarBaz.class'
@@ -79,14 +79,13 @@ class TestAntwrap < Test::Unit::TestCase
 #        </fileset>
 #        <pathelement location="${common.classes}"/>
 #    </path>
-    @ant.project().setNewProperty("pattern", '**/*.jar' )
-    @ant.project().setNewProperty("resource_dir", @resource_dir )
+    @ant.properties(:pattern => '**/*.jar')
+    @ant.properties(:resource_dir => @resource_dir)
     path = @ant.path(:id => 'common.class.path'){
       fileset(:dir => '${resource_dir}'){
         include(:name => '${pattern}')
       }
     }
-    path.execute
     
     @ant.javac(:srcdir => @resource_dir + '/src', 
     :destdir => @output_dir + '/classes',
@@ -96,7 +95,7 @@ class TestAntwrap < Test::Unit::TestCase
     :failonerror => 'yes',
     :includes => 'foo/bar/**',
     :excludes => 'foo/bar/baz/**',
-    :classpathref => 'common.class.path').execute
+    :classpathref => 'common.class.path')
     
     assert_exists @output_dir + '/classes/foo/bar/FooBar.class'
     assert_absent @output_dir + '/classes/foo/bar/baz/FooBarBaz.class'
@@ -109,7 +108,7 @@ class TestAntwrap < Test::Unit::TestCase
     @ant.jar(:destfile => @output_dir + '/Foo.jar', 
     :basedir => @resource_dir + '/src',
     :level => '9',
-    :duplicate => 'preserve').execute
+    :duplicate => 'preserve')
     
     assert_exists @output_dir + '/Foo.jar'
   end
@@ -131,10 +130,10 @@ class TestAntwrap < Test::Unit::TestCase
           :failonerror => 'yes',
           :includes => 'foo/bar/**',
           :excludes => 'foo/bar/baz/**',
-          :classpath => @resource_dir + '/parent.jar').execute
+          :classpath => @resource_dir + '/parent.jar')
     
-    @ant.project().setNewProperty("output_dir", @output_dir )
-    @ant.project().setNewProperty("resource_dir", @resource_dir )
+    @ant.properties(:output_dir => @output_dir)
+    @ant.properties(:resource_dir => @resource_dir)
     java_task = @ant.jvm(:classname => 'foo.bar.FooBar', :fork => 'no') {
        arg(:value => 'argOne')
        classpath(){
@@ -145,11 +144,10 @@ class TestAntwrap < Test::Unit::TestCase
        jvmarg(:value => 'server')
        sysproperty(:key=> 'antwrap', :value => 'coolio')
     }
-    java_task.execute  
   end
   
   def test_echo_task
-    @ant.echo(:message => "Antwrap is running an Echo task", :level => 'info').execute
+    @ant.echo(:message => "Antwrap is running an Echo task", :level => 'info')
   end
  
   def test_mkdir_task
@@ -157,7 +155,7 @@ class TestAntwrap < Test::Unit::TestCase
     
     assert_absent dir
     
-    @ant.mkdir(:dir => dir).execute
+    @ant.mkdir(:dir => dir)
     
     assert_exists dir
   end 
@@ -167,18 +165,34 @@ class TestAntwrap < Test::Unit::TestCase
     
     assert_absent dir
     
-    @ant.project().setNewProperty("outputProperty", dir )
-    @ant.mkdir(:dir => "${outputProperty}").execute
+    @ant.properties(:outputProperty => dir)
+    @ant.mkdir(:dir => "${outputProperty}")
     
     assert_exists dir
   end 
   
+  def test_macrodef_task
+    dir = @output_dir + '/foo'
+    
+    assert_absent dir
+    
+    @ant.properties(:outputProperty => dir)
+    @ant.macrodef(:name => 'testmacrodef'){
+      sequential(){
+        mkdir(:dir => "${outputProperty}")
+      }
+    }
+    @ant.testmacrodef()
+    assert_exists dir
+  
+  end
+  
   private 
   def assert_exists(file_path)
-    assert(File.exists?(file_path))
+    assert(File.exists?(file_path), "Does not exist[#{file_path}]")
   end
   
   def assert_absent(file_path)
-    assert(!File.exists?(file_path))
+    assert(!File.exists?(file_path), "Should not exist[#{file_path}]")
   end
 end

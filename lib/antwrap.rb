@@ -9,7 +9,7 @@ class AntTask
   private
   @@task_stack=Array.new
   attr_reader :unknown_element, :project, :taskname
-  protected :unknown_element
+  
   public  
   def initialize(taskname, project, attributes, proc)
     @taskname = taskname
@@ -60,6 +60,7 @@ class AntTask
   end
   
   def execute
+    puts "execute #{taskname}"
     begin
       @unknown_element.maybeConfigure
     rescue
@@ -70,8 +71,12 @@ class AntTask
 end
 
 class Ant
-  attr_reader :project
-  def initialize()
+    
+    attr :project, false
+    attr :declarative, true
+    
+    def initialize(declarative=true)
+      self.declarative=(declarative)      
       @project= Java::org.apache.tools.ant.Project.new
       @project.init
       default_logger = Java::org.apache.tools.ant.DefaultLogger.new
@@ -80,10 +85,13 @@ class Ant
       default_logger.setErrorPrintStream(java.lang.System.err);
       default_logger.setEmacsMode(false);
       @project.addBuildListener(default_logger)
-  end
+    end
   
   def create_task(taskname, attributes, proc)
-    AntTask.new(taskname, project(), attributes, proc)
+    task = AntTask.new(taskname, project(), attributes, proc)
+    task.execute if declarative()
+    @@tasks.push(attributes[:name]) if taskname == 'macrodef'
+    task
   end
   
   def method_missing(sym, *args)
@@ -93,31 +101,38 @@ class Ant
         proc = block_given? ? Proc.new : nil 
         return create_task(sym.to_s, args[0], proc)
       rescue
-        @@log.error("Ant.method_missing sym[#{sym.to_s}]")
+        @@log.error("Error instantiating task[#{sym.to_s}]")
       end
     else
         @@log.error("Not an Ant Task[#{sym.to_s}]")
     end
   end
   
+  #overridden. 'java' conflicts wth the jruby module.
   def jvm(attributes)
     proc = block_given? ? Proc.new : nil 
     create_task('java', attributes, proc)
   end  
   
+  #overridden. 'mkdir' conflicts wth the rake library.
   def mkdir(attributes)
     proc = block_given? ? Proc.new : nil 
     create_task('mkdir', attributes, proc)
   end  
   
+  #overridden. 'copy' conflicts wth the rake library.
   def copy(attributes)
     proc = block_given? ? Proc.new : nil 
     create_task('copy', attributes, proc)
   end  
   
+  def properties(props=Hash.new())
+    props.each {|key, value| project().setNewProperty(key.to_s, value) }
+  end
+  
+  @@tasks = [
   # standard ant tasks
-  # optional tasks
-  @@tasks = ['mkdir', 'javac',   'chmod', 'delete', 'copy', 'move', 'jar', 'rmic', 'cvs', 'get', 'unzip', 
+      'mkdir', 'javac',   'chmod', 'delete', 'copy', 'move', 'jar', 'rmic', 'cvs', 'get', 'unzip', 
       'unjar', 'unwar', 'echo', 'javadoc', 'zip', 'gzip', 'gunzip', 'replace', 'java', 'tstamp', 'property', 
       'xmlproperty', 'taskdef', 'ant', 'exec', 'tar', 'untar', 'available', 'filter', 'fixcrlf', 'patch', 
       'style', 'xslt', 'touch', 'signjar', 'genkey', 'antstructure', 'execon', 'antcall', 'sql', 'mail', 
@@ -126,6 +141,7 @@ class Ant
       'loadfile', 'manifest', 'loadproperties', 'basename', 'dirname', 'cvschangelog', 'cvsversion', 'buildnumber', 
       'concat', 'cvstagdiff', 'tempfile', 'import', 'whichresource', 'subant', 'sync', 'defaultexcludes', 'presetdef', 
       'macrodef', 'nice', 'length', 
+  # optional tasks
       'image', 'script', 'netrexxc', 'renameext', 'ejbc', 'ddcreator', 'wlrun', 'wlstop', 'vssadd', 'vsscheckin', 'vsscheckout', 
       'vsscp', 'vsscreate', 'vssget', 'vsshistory', 'vsslabel', 'ejbjar', 'mparse', 'mmetrics', 'maudit', 'junit', 'cab', 
       'ftp', 'icontract', 'javacc', 'jjdoc', 'jjtree', 'stcheckout', 'stcheckin', 'stlabel', 'stlist', 'wljspc', 'jlink', 
@@ -139,14 +155,11 @@ class Ant
       'splash', 'serverdeploy', 'jarlib-display', 'jarlib-manifest', 'jarlib-available', 'jarlib-resolve', 'setproxy', 'vbc', 'symlink', 
       'chgrp', 'chown', 'attrib', 'scp', 'sshexec', 'jsharpc', 'rexec', 'scriptdef', 'ildasm', 
   # deprecated ant tasks (kept for back compatibility)
-      'starteam', 'javadoc2', 'copydir', 'copyfile', 'deltree', 'rename'
-  ] 
+      'starteam', 'javadoc2', 'copydir', 'copyfile', 'deltree', 'rename'] 
   
-  # different filename mappers
   @@types = [ 'classfileset', 'description', 'dirset', 'filelist', 'fileset', 'filterchain', 'filterreader', 'filterset', 'mapper', 'redirector', 
       'identitymapper', 'flattenmapper', 'globmapper', 'mergemapper', 'regexpmapper', 'packagemapper', 'unpackagemapper', 'compositemapper', 
       'chainedmapper', 'filtermapper', 'path', 'patternset', 'regexp', 'substitution', 'xmlcatalog', 'extensionSet', 'extension', 'libfileset', 
-      'selector', 'zipfileset', 'scriptfilter', 'propertyset', 'assertions', 'concatfilter', 'isfileselected' 
-  ]
+      'selector', 'zipfileset', 'scriptfilter', 'propertyset', 'assertions', 'concatfilter', 'isfileselected' ]
   
 end
