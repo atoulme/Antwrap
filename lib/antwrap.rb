@@ -4,7 +4,7 @@ require 'logger'
 
 @@log = Logger.new(STDOUT)
 @@log.level = Logger::INFO
-  
+
 class AntTask
   private
   @@task_stack=Array.new
@@ -31,7 +31,7 @@ class AntTask
     if proc
       @@log.debug("task_stack.push #{taskname} >> #{@@task_stack}") 
       @@task_stack.push self
-
+      
       singleton_class = class << proc; self; end
       singleton_class.module_eval{
         def method_missing(m, *a, &proc)
@@ -42,7 +42,7 @@ class AntTask
       @@task_stack.pop 
     end
   end
-
+  
   def method_missing(sym, *args)
     @@log.debug("AntTask.method_missing sym[#{sym.to_s}]")
     begin
@@ -60,32 +60,32 @@ class AntTask
   end
   
   def execute
-    puts "execute #{taskname}"
-    begin
-      @unknown_element.maybeConfigure
-    rescue
-      @@log.error("failed maybeConfigure")
-    end
+    @unknown_element.maybeConfigure
     @unknown_element.execute
+    @executed = true
+  end
+  
+  def was_executed?
+    @executed
   end
 end
 
 class Ant
-    
-    attr :project, false
-    attr :declarative, true
-    
-    def initialize(declarative=true)
-      self.declarative=(declarative)      
-      @project= Java::org.apache.tools.ant.Project.new
-      @project.init
-      default_logger = Java::org.apache.tools.ant.DefaultLogger.new
-      default_logger.setMessageOutputLevel(2);
-      default_logger.setOutputPrintStream(java.lang.System.out);
-      default_logger.setErrorPrintStream(java.lang.System.err);
-      default_logger.setEmacsMode(false);
-      @project.addBuildListener(default_logger)
-    end
+  
+  attr :project, false
+  attr :declarative, true
+  
+  def initialize(declarative=true)
+    self.declarative=(declarative)      
+    @project= Java::org.apache.tools.ant.Project.new
+    @project.init
+    default_logger = Java::org.apache.tools.ant.DefaultLogger.new
+    default_logger.setMessageOutputLevel(2);
+    default_logger.setOutputPrintStream(java.lang.System.out);
+    default_logger.setErrorPrintStream(java.lang.System.err);
+    default_logger.setEmacsMode(false);
+    @project.addBuildListener(default_logger)
+  end
   
   def create_task(taskname, attributes, proc)
     task = AntTask.new(taskname, project(), attributes, proc)
@@ -104,30 +104,28 @@ class Ant
         @@log.error("Error instantiating task[#{sym.to_s}]")
       end
     else
-        @@log.error("Not an Ant Task[#{sym.to_s}]")
+      @@log.error("Not an Ant Task[#{sym.to_s}]")
     end
   end
   
   #overridden. 'java' conflicts wth the jruby module.
   def jvm(attributes)
-    proc = block_given? ? Proc.new : nil 
-    create_task('java', attributes, proc)
+    create_task('java', attributes, (block_given? ? Proc.new : nil))
   end  
   
   #overridden. 'mkdir' conflicts wth the rake library.
   def mkdir(attributes)
-    proc = block_given? ? Proc.new : nil 
-    create_task('mkdir', attributes, proc)
+    create_task('mkdir', attributes, (block_given? ? Proc.new : nil))
   end  
   
   #overridden. 'copy' conflicts wth the rake library.
   def copy(attributes)
-    proc = block_given? ? Proc.new : nil 
-    create_task('copy', attributes, proc)
+    create_task('copy', attributes, (block_given? ? Proc.new : nil))
   end  
   
-  def add_properties(props=Hash.new())
-    props.each {|key, value| project().setNewProperty(key.to_s, value) }
+  def add_property(name, value)
+      property = property(:name => name, :value => value)
+      property.execute unless property.was_executed?
   end
   
   @@tasks = [
