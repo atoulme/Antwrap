@@ -22,11 +22,7 @@ class AntTask
     @unknown_element.setTaskName(taskname);
     
     wrapper = Java::org.apache.tools.ant.RuntimeConfigurable.new(@unknown_element, @unknown_element.getTaskName());
-    if attributes
-      attributes.each do |key, value| 
-        wrapper.setAttribute(key.to_s, value)
-      end
-    end
+    attributes.each {|key, val| wrapper.setAttribute(key.to_s, val)} unless attributes == nil
     
     if proc
       @@log.debug("task_stack.push #{taskname} >> #{@@task_stack}") 
