@@ -77,8 +77,8 @@ class TestAntwrap < Test::Unit::TestCase
     #        </fileset>
     #        <pathelement location="${common.classes}"/>
     #    </path>
-    @ant.add_property('pattern', '**/*.jar') 
-    @ant.add_property('resource_dir', @resource_dir)
+    @ant.property(:name => 'pattern', :value => '**/*.jar') 
+    @ant.property(:name => 'resource_dir', :value => @resource_dir)
     @ant.path(:id => 'common.class.path'){
       fileset(:dir => '${resource_dir}'){
         include(:name => '${pattern}')
@@ -102,8 +102,8 @@ class TestAntwrap < Test::Unit::TestCase
   #  <jar destfile='${dist}/lib/app.jar' basedir='${build}/classes'/>
   def test_jar_task
     assert_absent @output_dir + '/Foo.jar'
-    @ant.add_property('outputdir', @output_dir)
-    @ant.add_property('destfile', '${outputdir}/Foo.jar') 
+    @ant.property(:name => 'outputdir', :value => @output_dir)
+    @ant.property(:name => 'destfile', :value => '${outputdir}/Foo.jar') 
     @ant.jar( :destfile => "${destfile}", 
     :basedir => @resource_dir + '/src',
     :level => '9',
@@ -131,8 +131,8 @@ class TestAntwrap < Test::Unit::TestCase
     :excludes => 'foo/bar/baz/**',
     :classpath => @resource_dir + '/parent.jar')
     
-    @ant.add_property('output_dir', @output_dir)
-    @ant.add_property('resource_dir', @resource_dir)
+    @ant.property(:name => 'output_dir', :value => @output_dir)
+    @ant.property(:name => 'resource_dir', :value =>@resource_dir)
     @ant.jvm(:classname => 'foo.bar.FooBar', :fork => 'no') {
       arg(:value => 'argOne')
       classpath(){
@@ -164,7 +164,7 @@ class TestAntwrap < Test::Unit::TestCase
     
     assert_absent dir
     
-    @ant.add_property('outputProperty', dir)
+    @ant.property(:name => 'outputProperty', :value => dir)
     @ant.mkdir(:dir => "${outputProperty}")
     
     assert_exists dir

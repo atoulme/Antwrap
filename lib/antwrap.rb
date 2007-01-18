@@ -119,11 +119,6 @@ class Ant
     create_task('copy', attributes, (block_given? ? Proc.new : nil))
   end  
   
-  def add_property(name, value)
-      property = property(:name => name, :value => value)
-      property.execute unless property.was_executed?
-  end
-  
   @@tasks = [
   # standard ant tasks
       'mkdir', 'javac',   'chmod', 'delete', 'copy', 'move', 'jar', 'rmic', 'cvs', 'get', 'unzip', 
