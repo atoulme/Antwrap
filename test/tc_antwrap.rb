@@ -5,12 +5,12 @@ require '../lib/antwrap.rb'
 class TestAntwrap < Test::Unit::TestCase
   
   def setup
-    @ant = Ant.new(true)
     #   ENV is broken as of JRuby 0.9.2 but patched in 0.9.3 (see: http://jira.codehaus.org/browse/JRUBY-349)
     #   @output_dir = ENV['PWD'] + '/output'
     #   @resource_dir = ENV['PWD'] + '/test-resources'
     #   The following is a workaround
     current_dir = Java::java.lang.System.getProperty("user.dir")
+    @ant = AntProject.new("testProject", "", current_dir, true)
     @output_dir = current_dir + '/test/output'
     @resource_dir = current_dir + '/test/test-resources'
     
@@ -185,6 +185,10 @@ class TestAntwrap < Test::Unit::TestCase
     @ant.testmacrodef(:destination => dir)
     assert_exists dir
     
+  end
+  
+  def test_cdata
+    @ant.echo(:pcdata => "Foobar &amp; <><><>")
   end
   
   private 

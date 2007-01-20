@@ -3,14 +3,17 @@ require 'rexml/document'
 @properties = Hash.new
 xml = REXML::Document.new(File.open('/Users/caleb/projects/antwrap/test/test-resources/build.xml'))
 @outfile.print "require 'antwrap.rb'\n"
-@outfile.print "@ant = Ant.new()\n"
+@outfile.print "@ant = AntProject.new()\n"
 
 def create_symbol(str)
+    str = rubyize(str)    
+    return str.gsub(/(\w*[^,\s])/, ':\1')
+end
+def rubyize(str)
   if (str == nil) 
     str = ''
   else
     str = str.gsub(/(\w*)[\-|\.](\w*)/, '\1_\2')
-    str = str.gsub(/(\w*[^,\s])/, ':\1')
   end
   return str
 end
@@ -18,22 +21,26 @@ end
 
 @one_tab= '   '
 def print_task(task, tab=@one_tab, prefix='')
-  if task.name == 'java'
-    task_name = 'jvm'
-  else
-    task_name = task.name
-  end
-  
+  task_name = rubyize(task.name)
   @outfile.print "#{tab}#{prefix}#{task_name}("
   
+  if(task_name == 'macrodef')
+    task.attributes['name'] = rubyize(task.attributes['name'])
+  end
   isFirst = true;
   task.attributes.each do |key, value|
     if !isFirst 
       @outfile.print(",\n#{tab+@one_tab}")
     end
-    value = @properties[value] unless @properties[value] == nil
     @outfile.print ":#{key} => \"#{value}\""
     isFirst = false;
+  end
+  
+  if task.has_text?
+    pcdata = task.texts().join
+    if(pcdata.strip() != '')
+      @outfile.print ":pcdata => \"#{pcdata}\""  
+    end
   end
   @outfile.print ")"
   

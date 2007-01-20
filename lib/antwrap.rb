@@ -1,6 +1,7 @@
 require 'fileutils'
 require 'logger'
 require 'java'
+
 module ApacheAnt
  include_class "org.apache.tools.ant.UnknownElement"
  include_class "org.apache.tools.ant.RuntimeConfigurable"
@@ -13,11 +14,11 @@ module JavaLang
 end
 
 @@log = Logger.new(STDOUT)
-@@log.level = Logger::INFO
+@@log.level = Logger::DEBUG
 
 class AntTask
   private
-  @@task_stack=Array.new
+  @@task_stack = Array.new
   attr_reader :unknown_element, :project, :taskname
   
   public  
@@ -25,14 +26,20 @@ class AntTask
     @taskname = taskname
     @project = project
     @unknown_element = ApacheAnt::UnknownElement.new(taskname)
-    @unknown_element.setProject(project);
-    @unknown_element.setNamespace('');
-    @unknown_element.setQName(taskname);
-    @unknown_element.setTaskType(taskname);
-    @unknown_element.setTaskName(taskname);
+    @unknown_element.project= project
+    @unknown_element.namespace= ''
+    @unknown_element.QName= taskname
+    @unknown_element.taskType= taskname
+    @unknown_element.taskName= taskname
     
     wrapper = ApacheAnt::RuntimeConfigurable.new(@unknown_element, @unknown_element.getTaskName());
-    attributes.each {|key, val| wrapper.setAttribute(key.to_s, val)} unless attributes == nil
+    attributes.each do |key, val| 
+      if(key.to_s != 'pcdata')
+        wrapper.setAttribute(key.to_s, val)
+      else
+        wrapper.addText(val)
+      end
+    end unless attributes == nil
     
     if proc
       @@log.debug("task_stack.push #{taskname} >> #{@@task_stack}") 
@@ -76,38 +83,44 @@ class AntTask
   end
 end
 
-class Ant
+class AntProject
   
   attr :project, false
   attr :declarative, true
   
-  def initialize(declarative=true)
-    self.declarative=(declarative)      
+  def initialize(name='', default='', basedir='',declarative=true)
     @project= ApacheAnt::Project.new
+    @project.name= name
+    @project.default= default
+    @project.basedir= basedir
     @project.init
+    self.declarative= declarative      
     default_logger = ApacheAnt::DefaultLogger.new
-    default_logger.setMessageOutputLevel(2);
-    default_logger.setOutputPrintStream(JavaLang::System.out);
-    default_logger.setErrorPrintStream(JavaLang::System.err);
-    default_logger.setEmacsMode(false);
-    @project.addBuildListener(default_logger)
+    default_logger.messageOutputLevel= 2
+    default_logger.outputPrintStream= JavaLang::System.out
+    default_logger.errorPrintStream= JavaLang::System.err
+    default_logger.emacsMode= false
+    @project.addBuildListener default_logger
   end
   
   def create_task(taskname, attributes, proc)
     task = AntTask.new(taskname, project(), attributes, proc)
-    task.execute if declarative()
-    @@tasks.push(attributes[:name]) if taskname == 'macrodef'
+    task.execute if declarative
+    if taskname == 'macrodef'
+      @@log.debug("Pushing #{attributes[:name]} to tasks")
+      @@tasks.push(attributes[:name]) 
+    end
     task
   end
   
   def method_missing(sym, *args)
     if(@@tasks.include?(sym.to_s) || @@types.include?(sym.to_s))
       begin
-        @@log.info("Ant.method_missing sym[#{sym.to_s}]")
+        @@log.info("AntProject.method_missing sym[#{sym.to_s}]")
         proc = block_given? ? Proc.new : nil 
         return create_task(sym.to_s, args[0], proc)
       rescue
-        @@log.error("Error instantiating task[#{sym.to_s}]")
+        @@log.error("Error instantiating task[#{sym.to_s}]" + $!)
       end
     else
       @@log.error("Not an Ant Task[#{sym.to_s}]")
