@@ -1,6 +1,16 @@
-require 'java'
 require 'fileutils'
 require 'logger'
+require 'java'
+module ApacheAnt
+ include_class "org.apache.tools.ant.UnknownElement"
+ include_class "org.apache.tools.ant.RuntimeConfigurable"
+ include_class "org.apache.tools.ant.Project"
+ include_class "org.apache.tools.ant.DefaultLogger"
+end
+
+module JavaLang
+ include_class "java.lang.System"
+end
 
 @@log = Logger.new(STDOUT)
 @@log.level = Logger::INFO
@@ -14,14 +24,14 @@ class AntTask
   def initialize(taskname, project, attributes, proc)
     @taskname = taskname
     @project = project
-    @unknown_element = Java::org.apache.tools.ant.UnknownElement.new(taskname)
+    @unknown_element = ApacheAnt::UnknownElement.new(taskname)
     @unknown_element.setProject(project);
     @unknown_element.setNamespace('');
     @unknown_element.setQName(taskname);
     @unknown_element.setTaskType(taskname);
     @unknown_element.setTaskName(taskname);
     
-    wrapper = Java::org.apache.tools.ant.RuntimeConfigurable.new(@unknown_element, @unknown_element.getTaskName());
+    wrapper = ApacheAnt::RuntimeConfigurable.new(@unknown_element, @unknown_element.getTaskName());
     attributes.each {|key, val| wrapper.setAttribute(key.to_s, val)} unless attributes == nil
     
     if proc
@@ -73,12 +83,12 @@ class Ant
   
   def initialize(declarative=true)
     self.declarative=(declarative)      
-    @project= Java::org.apache.tools.ant.Project.new
+    @project= ApacheAnt::Project.new
     @project.init
-    default_logger = Java::org.apache.tools.ant.DefaultLogger.new
+    default_logger = ApacheAnt::DefaultLogger.new
     default_logger.setMessageOutputLevel(2);
-    default_logger.setOutputPrintStream(java.lang.System.out);
-    default_logger.setErrorPrintStream(java.lang.System.err);
+    default_logger.setOutputPrintStream(JavaLang::System.out);
+    default_logger.setErrorPrintStream(JavaLang::System.err);
     default_logger.setEmacsMode(false);
     @project.addBuildListener(default_logger)
   end
@@ -103,12 +113,7 @@ class Ant
       @@log.error("Not an Ant Task[#{sym.to_s}]")
     end
   end
-  
-  #overridden. 'java' conflicts wth the jruby module.
-  def jvm(attributes)
-    create_task('java', attributes, (block_given? ? Proc.new : nil))
-  end  
-  
+
   #overridden. 'mkdir' conflicts wth the rake library.
   def mkdir(attributes)
     create_task('mkdir', attributes, (block_given? ? Proc.new : nil))

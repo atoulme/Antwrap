@@ -58,7 +58,7 @@
     </target>
 
     <target name="compile" depends="clean, init, compile.common">
-       <javac verbose="true" srcdir="src" destdir="classes" classpathref="common.class.path"/>
+       <javac verbose="no" srcdir="src" destdir="classes" classpathref="common.class.path"/>
     </target>
 
     <target name="compile-tests" depends="compile">
@@ -193,7 +193,7 @@
     <target name="upload-dev-server" depends="devdistro">
         <ftp server="tpltst01.tpl.toronto.on.ca" userid="root" password=";vwebinfra;"
              remotedir="/opt/bea3/user_projects/zincroe/ksDomain/applications/kidsEAR/kidsWEB"
-             verbose="yes" action="send" passive="yes">
+             verbose="no" action="send" passive="yes">
             <fileset dir="${distro.dir}"/>
         </ftp>
     </target>
@@ -202,7 +202,7 @@
         <!-- Production webapp runs in a cluster so we need to upload to 2 machines -->
         <ftp server="tplapp01.tpl.toronto.on.ca" userid="weblogic" password="password"
              remotedir="/u01/bea/applications/tpldomain/kidsspace/kidsWEB"
-             verbose="yes" action="send" passive="yes">
+             verbose="no" action="send" passive="yes">
             <fileset dir="${distro.dir}"/>
         </ftp>
         <ftp server="tplapp02.tpl.toronto.on.ca" userid="weblogic" password="password"
