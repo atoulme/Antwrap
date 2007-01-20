@@ -1,9 +1,7 @@
 require 'rexml/document'
 @outfile = File.new('/Users/caleb/projects/antwrap/test/output/Rakefile.rb', 'w+')
-@properties = Hash.new
 xml = REXML::Document.new(File.open('/Users/caleb/projects/antwrap/test/test-resources/build.xml'))
-@outfile.print "require 'antwrap.rb'\n"
-@outfile.print "@ant = AntProject.new()\n"
+
 
 def create_symbol(str)
     str = rubyize(str)    
@@ -19,6 +17,8 @@ def rubyize(str)
 end
 
 
+@outfile.print "require_gem 'Antwrap'\n"
+@outfile.print "@ant = AntProject.new()\n"
 @one_tab= '   '
 def print_task(task, tab=@one_tab, prefix='')
   task_name = rubyize(task.name)

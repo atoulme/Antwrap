@@ -137,6 +137,11 @@ class AntProject
     create_task('copy', attributes, (block_given? ? Proc.new : nil))
   end  
   
+  #overridden. 'java' conflicts wth the JRuby library.
+  def jvm(attributes)
+    create_task('java', attributes, (block_given? ? Proc.new : nil))
+  end  
+  
   @@tasks = [
   # standard ant tasks
       'mkdir', 'javac',   'chmod', 'delete', 'copy', 'move', 'jar', 'rmic', 'cvs', 'get', 'unzip', 

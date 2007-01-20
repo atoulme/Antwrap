@@ -1,6 +1,6 @@
 #JAVA_HOME=
-JRUBY_HOME=/Users/caleb/tools/jruby-0.9.2 
-ANT_HOME=/Users/caleb/tools/apache-ant-1.7.0
+#JRUBY_HOME=/Users/username/tools/jruby-0.9.2 
+#ANT_HOME=/Users/username/tools/apache-ant-1.7.0
 
 if [ ! ${JRUBY_HOME} ]
 then 
