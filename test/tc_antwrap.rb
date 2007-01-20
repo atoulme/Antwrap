@@ -1,3 +1,9 @@
+# antwrap
+#
+# Copyright Caleb Powell 2007
+#
+# Licensed under the LGPL, see the file COPYING in the distribution
+#
 require 'test/unit'
 require 'fileutils'
 require '../lib/antwrap.rb'

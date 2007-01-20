@@ -1,3 +1,9 @@
+# antwrap
+#
+# Copyright Caleb Powell 2007
+#
+# Licensed under the LGPL, see the file COPYING in the distribution
+#
 require 'rexml/document'
 @outfile = File.new('/Users/caleb/projects/antwrap/test/output/Rakefile.rb', 'w+')
 xml = REXML::Document.new(File.open('/Users/caleb/projects/antwrap/test/test-resources/build.xml'))

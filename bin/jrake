@@ -1,3 +1,9 @@
+# antwrap
+#
+# Copyright Caleb Powell 2007
+#
+# Licensed under the LGPL, see the file COPYING in the distribution
+#
 #JAVA_HOME=
 #JRUBY_HOME=/Users/username/tools/jruby-0.9.2 
 #ANT_HOME=/Users/username/tools/apache-ant-1.7.0
