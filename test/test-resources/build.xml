@@ -307,4 +307,34 @@
         </sequential>
     </macrodef>
 
+	<taskdef resource="net/sf/antcontrib/antlib.xml"/>
+	<target name="ant-contrib">
+		<if>
+		 <equals arg1="bar" arg2="bar" />
+		 <then>
+		   <echo message="if 1 is equal" />
+		 </then>
+		 <else>
+		   <echo message="if 1 is not equal" />
+		 </else>
+		</if>
+		<if>
+		 <equals arg1="${foo}" arg2="bar" />
+		 <then>
+		   <echo message="if 2 is equal" />
+		 </then>
+		
+		 <elseif>
+		  <equals arg1="foo" arg2="foo" />
+		  <then>
+		   <echo message="if 2.1 is equal" />
+		  </then>
+		 </elseif>
+		 <else>
+		   <echo message="The value of property foo is not 'foo' or 'bar'" />
+		 </else>
+		</if>
+		
+	</target>
+	
 </project>

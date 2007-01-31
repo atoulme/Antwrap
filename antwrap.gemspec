@@ -22,6 +22,6 @@ SPEC = Gem::Specification.new do |s|
   s.autorequire   = 'antwrap'
   s.test_file     = 'test/tc_antwrap.rb'
   s.has_rdoc      = false
-  s.extra_rdoc_files  = ['README']
+  s.extra_rdoc_files  = ['README', 'COPYING']
   
 end

@@ -197,6 +197,51 @@ class TestAntwrap < Test::Unit::TestCase
     @ant.echo(:pcdata => "Foobar &amp; <><><>")
   end
   
+  def test_ant_contrib
+    #<if>
+    # <equals arg1="${foo}" arg2="bar" />
+    # <then>
+    #   <echo message="The value of property foo is 'bar'" />
+    # </then>
+    #
+    # <elseif>
+    #  <equals arg1="${foo}" arg2="foo" />
+    #  <then>
+    #   <echo message="The value of property foo is 'foo'" />
+    #  </then>
+    # </elseif>
+    #
+    #
+    # <else>
+    #   <echo message="The value of property foo is not 'foo' or 'bar'" />
+    # </else>
+    #</if>
+    #   
+    @ant.taskdef(:resource => "net/sf/antcontrib/antlib.xml")
+
+    @ant.property(:name => "bar", :value => "bar")
+    @ant._if(){
+      _equals(:arg1 => "${bar}", :arg2 => "bar")
+      _then(){
+        echo(:message => "if 1 is equal")
+      }
+      _else(){
+        echo(:message => "if 1 is not equal")
+      }
+    }
+
+    @ant.property(:name => "baz", :value => "foo")
+    @ant._if(){
+      _equals(:arg1 => "${baz}", :arg2 => "bar")
+      _then(){
+        echo(:message => "if 2 is equal")
+      }
+      _else(){
+        echo(:message => "if 2 is not equal")
+      }
+    }
+
+  end
   private 
   def assert_exists(file_path)
     assert(File.exists?(file_path), "Does not exist[#{file_path}]")

@@ -20,7 +20,7 @@ module JavaLang
 end
 
 @@log = Logger.new(STDOUT)
-@@log.level = Logger::DEBUG
+@@log.level = Logger::ERROR
 
 class AntTask
   private
@@ -29,6 +29,9 @@ class AntTask
   
   public  
   def initialize(taskname, project, attributes, proc)
+    if(taskname[0,1] == "_")
+      taskname = taskname[1, taskname.length-1]
+    end
     @taskname = taskname
     @project = project
     @unknown_element = ApacheAnt::UnknownElement.new(taskname)
@@ -87,6 +90,7 @@ class AntTask
   def was_executed?
     @executed
   end
+  
 end
 
 class AntProject
@@ -114,13 +118,11 @@ class AntProject
     task.execute if declarative
     if taskname == 'macrodef'
       @@log.debug("Pushing #{attributes[:name]} to tasks")
-      @@tasks.push(attributes[:name]) 
     end
     task
   end
   
   def method_missing(sym, *args)
-    if(@@tasks.include?(sym.to_s) || @@types.include?(sym.to_s))
       begin
         @@log.info("AntProject.method_missing sym[#{sym.to_s}]")
         proc = block_given? ? Proc.new : nil 
@@ -128,9 +130,6 @@ class AntProject
       rescue
         @@log.error("Error instantiating task[#{sym.to_s}]" + $!)
       end
-    else
-      @@log.error("Not an Ant Task[#{sym.to_s}]")
-    end
   end
 
   #overridden. 'mkdir' conflicts wth the rake library.
@@ -144,40 +143,8 @@ class AntProject
   end  
   
   #overridden. 'java' conflicts wth the JRuby library.
-  def jvm(attributes)
+  def jvm(attributes=Hash.new)
     create_task('java', attributes, (block_given? ? Proc.new : nil))
   end  
-  
-  @@tasks = [
-  # standard ant tasks
-      'mkdir', 'javac',   'chmod', 'delete', 'copy', 'move', 'jar', 'rmic', 'cvs', 'get', 'unzip', 
-      'unjar', 'unwar', 'echo', 'javadoc', 'zip', 'gzip', 'gunzip', 'replace', 'java', 'tstamp', 'property', 
-      'xmlproperty', 'taskdef', 'ant', 'exec', 'tar', 'untar', 'available', 'filter', 'fixcrlf', 'patch', 
-      'style', 'xslt', 'touch', 'signjar', 'genkey', 'antstructure', 'execon', 'antcall', 'sql', 'mail', 
-      'fail', 'war', 'uptodate', 'apply', 'record', 'cvspass', 'typedef', 'sleep', 'pathconvert', 'ear', 
-      'parallel', 'sequential', 'condition', 'dependset', 'bzip2', 'bunzip2', 'checksum', 'waitfor', 'input', 
-      'loadfile', 'manifest', 'loadproperties', 'basename', 'dirname', 'cvschangelog', 'cvsversion', 'buildnumber', 
-      'concat', 'cvstagdiff', 'tempfile', 'import', 'whichresource', 'subant', 'sync', 'defaultexcludes', 'presetdef', 
-      'macrodef', 'nice', 'length', 
-  # optional tasks
-      'image', 'script', 'netrexxc', 'renameext', 'ejbc', 'ddcreator', 'wlrun', 'wlstop', 'vssadd', 'vsscheckin', 'vsscheckout', 
-      'vsscp', 'vsscreate', 'vssget', 'vsshistory', 'vsslabel', 'ejbjar', 'mparse', 'mmetrics', 'maudit', 'junit', 'cab', 
-      'ftp', 'icontract', 'javacc', 'jjdoc', 'jjtree', 'stcheckout', 'stcheckin', 'stlabel', 'stlist', 'wljspc', 'jlink', 
-      'native2ascii', 'propertyfile', 'depend', 'antlr', 'vajload', 'vajexport', 'vajimport', 'telnet', 'csc', 'ilasm', 
-      'WsdlToDotnet', 'wsdltodotnet', 'importtypelib', 'stylebook', 'test', 'pvcs', 'p4change', 'p4delete', 'p4label', 'p4labelsync', 
-      'p4have', 'p4sync', 'p4edit', 'p4integrate', 'p4resolve', 'p4submit', 'p4counter', 'p4revert', 'p4reopen', 'p4fstat', 'javah', 
-      'ccupdate', 'cccheckout', 'cccheckin', 'ccuncheckout', 'ccmklbtype', 'ccmklabel', 'ccrmtype', 'cclock', 'ccunlock', 'ccmkbl', 
-      'ccmkattr', 'ccmkelem', 'ccmkdir', 'sound', 'junitreport', 'blgenclient', 'rpm', 'xmlvalidate', 'iplanet-ejbc', 'jdepend', 
-      'mimemail', 'ccmcheckin', 'ccmcheckout', 'ccmcheckintask', 'ccmreconfigure', 'ccmcreatetask', 'jpcoverage', 'jpcovmerge', 
-      'jpcovreport', 'p4add', 'jspc', 'replaceregexp', 'translate', 'sosget', 'soscheckin','soscheckout','soslabel', 'echoproperties', 
-      'splash', 'serverdeploy', 'jarlib-display', 'jarlib-manifest', 'jarlib-available', 'jarlib-resolve', 'setproxy', 'vbc', 'symlink', 
-      'chgrp', 'chown', 'attrib', 'scp', 'sshexec', 'jsharpc', 'rexec', 'scriptdef', 'ildasm', 
-  # deprecated ant tasks (kept for back compatibility)
-      'starteam', 'javadoc2', 'copydir', 'copyfile', 'deltree', 'rename'] 
-  
-  @@types = [ 'classfileset', 'description', 'dirset', 'filelist', 'fileset', 'filterchain', 'filterreader', 'filterset', 'mapper', 'redirector', 
-      'identitymapper', 'flattenmapper', 'globmapper', 'mergemapper', 'regexpmapper', 'packagemapper', 'unpackagemapper', 'compositemapper', 
-      'chainedmapper', 'filtermapper', 'path', 'patternset', 'regexp', 'substitution', 'xmlcatalog', 'extensionSet', 'extension', 'libfileset', 
-      'selector', 'zipfileset', 'scriptfilter', 'propertyset', 'assertions', 'concatfilter', 'isfileselected' ]
   
 end
