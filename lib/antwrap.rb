@@ -22,6 +22,7 @@ end
 @@log = Logger.new(STDOUT)
 @@log.level = Logger::ERROR
 
+
 class AntTask
   private
   @@task_stack = Array.new
@@ -90,6 +91,21 @@ class AntTask
   def was_executed?
     @executed
   end
+  
+  #overridden. 'mkdir' conflicts wth the rake library.
+  def mkdir(attributes)
+    create_task('mkdir', attributes, (block_given? ? Proc.new : nil))
+  end  
+  
+  #overridden. 'copy' conflicts wth the rake library.
+  def copy(attributes)
+    create_task('copy', attributes, (block_given? ? Proc.new : nil))
+  end  
+  
+  #overridden. 'java' conflicts wth the JRuby library.
+  def jvm(attributes=Hash.new)
+    create_task('java', attributes, (block_given? ? Proc.new : nil))
+  end  
   
 end
 

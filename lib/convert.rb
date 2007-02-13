@@ -17,7 +17,7 @@ end
                     'def',  'defined',  'do',  'else',  'elsif',  'END',  'end',  'ensure',  
                     'false',  'for',  'if',  'in',  'module',  'next',  'nil',  'not',  'or',  
                     'redo',  'rescue',  'retry',  'return',  'self',  'super',  'then',  'true',  
-                    'undef',  'unless',  'until',  'when',  'while',  'yield']
+                    'undef',  'unless',  'until',  'when',  'while',  'yield', 'java']
 
 xml = REXML::Document.new(@antfile)
 
@@ -49,7 +49,10 @@ def print_task(task, tab=@one_tab, prefix='')
   
   if(task_name == 'macrodef')
     task.attributes['name'] = rubyize(task.attributes['name'])
+  elsif(task_name == 'java')
+    task_name = 'jvm'
   end
+  
   isFirst = true;
   task.attributes.each do |key, value|
     if !isFirst 

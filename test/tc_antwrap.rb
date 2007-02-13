@@ -187,11 +187,10 @@ class TestAntwrap < Test::Unit::TestCase
         echo(:message => "Creating @{destination}")
         mkdir(:dir => "@{destination}")
       }
-    }
-    @ant.testmacrodef(:destination => dir)
-    assert_exists dir
-    
-  end
+      @ant.testmacrodef(:destination => dir)
+      assert_exists dir
+      
+    end
   
   def test_cdata
     @ant.echo(:pcdata => "Foobar &amp; <><><>")

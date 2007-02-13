@@ -8,7 +8,7 @@ require 'rubygems'
 
 SPEC = Gem::Specification.new do |s|
   s.name          = 'Antwrap'
-  s.version       = '0.1'
+  s.version       = '0.2'
   s.author        = 'Caleb Powell'
   s.email         = 'caleb.powell@gmail.com'
   s.homepage      = 'http://rubyforge.org/projects/antwrap/'
