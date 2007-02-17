@@ -5,7 +5,7 @@
 # Licensed under the LGPL, see the file COPYING in the distribution
 #
 require 'rexml/document'
-
+ 
 if ARGV.empty?
     puts "Usage: #{$0} [antfile] [rakefile]" 
     exit! 1

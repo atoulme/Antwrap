@@ -13,6 +13,7 @@ module ApacheAnt
  include_class "org.apache.tools.ant.RuntimeConfigurable"
  include_class "org.apache.tools.ant.Project"
  include_class "org.apache.tools.ant.DefaultLogger"
+ include_class "org.apache.tools.ant.Target"
 end
 
 module JavaLang
@@ -37,6 +38,7 @@ class AntTask
     @project = project
     @unknown_element = ApacheAnt::UnknownElement.new(taskname)
     @unknown_element.project= project
+    @unknown_element.owningTarget= ApacheAnt::Target.new()
     @unknown_element.namespace= ''
     @unknown_element.QName= taskname
     @unknown_element.taskType= taskname
