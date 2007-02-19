@@ -1,0 +1,119 @@
+<html><head><title>Antwrap - Invoke Ant tasks from your JRuby script!</title></head><body><ul>
+<pre><li>Sample code of the Antwrap library looks like this;
+
+<code lang="ruby">
+    #All options are optional. The defaults are as follows;
+    #{:name=&gt'', :basedir=&gt'.', :declarative=&gt true, :logger=&gt Logger.new(STDOUT), :loglevel=&gt Logger::DEBUG}
+    #so you can call AntProject.new() if you like.
+    
+    @ant = AntProject.new({:name=&gt"FooProject", 
+                           :basedir=&gt current_dir, 
+                           :declarative=&gt true, 
+                           :logger=&gt Logger.new(STDOUT), 
+                           :loglevel=&gt Logger::DEBUG})
+
+    @ant.path(:id =&gt; "other.class.path"){
+        pathelement(:location =&gt; "classes")
+        pathelement(:location =&gt; "config")
+    }
+
+
+    @ant.path(:id =&gt; "common.class.path"){
+        fileset(:dir =&gt; "${common.dir}/lib"){
+            include(:name =&gt; "**/*.jar")
+        }
+        pathelement(:location =&gt; "${common.classes}")
+    }
+
+    @ant.javac(:srcdir =&gt; "test", :destdir =&gt; "classes"){
+        classpath(:refid =&gt; "common.class.path")
+        classpath(:refid =&gt; "foo.class.path")
+    }
+</code>
+</li>
+</pre>
+
+<pre><li>Alternatively, you can declare your Ant project to run in non-declarative mode, so that it only executes tasks
+upon the invocation of the execute() method (this is a more Object Oriented approach, and may be useful in some
+circumstances):
+
+<code lang="ruby">
+    @ant = AntProject.new({:name=&gt"FooProject", :declarative=&gttrue})
+
+    javac_task = @ant.javac(:srcdir =&gt; "test", :destdir =&gt; "classes"){
+        classpath(:refid =&gt; "common.class.path")
+        classpath(:refid =&gt; "foo.class.path")
+    }
+
+    javac_task.execute
+</code>
+</li>
+</pre>
+
+<pre><li>There are some reserved words that we have to work around. For example, Ant-Contrib tasks such as 'if' and 'else'
+conflict with the Ruby reserved words. Under most circumstances, you won't need to use these tasks (indeed, the 
+awkwardness of conditional operations in Ant scripts is likely one of the reasons why you want to move to a build system 
+such as Rake). 
+
+Nevertheless, there are that occasions demands it. One such situation is the &lt;java&gt; Ant task. The 'java'
+symbol conflicts with a symbol in the JRuby library. 
+
+Reserved words like this can be worked around by simply prepending an underscore character ('_') to the task:
+
+<code lang="ruby">
+    @ant._java(:classname => 'foo.bar.FooBar', :fork => 'false') {
+      arg(:value => 'argOne')
+      classpath(){
+        pathelement(:location => '${output_dir}/classes')
+        pathelement(:location => '${resource_dir}/parent.jar')
+      }
+      arg(:value => 'argTwo')
+      jvmarg(:value => 'client')
+      sysproperty(:key=> 'antwrap', :value => 'coolio')
+    }
+    
+    #Because the 'java' Ant task is likely to be very popular, there is an alias you can use called 'jvm'.
+    #The above task could be rewritten as:
+    @ant.jvm(:classname => 'foo.bar.FooBar', :fork => 'false') {...
+    
+    #This is an example of the Ant-Contrib tasks.
+    #note: I added an underscore to 'equals' even though it isn't a reserved word. 
+    #This makes the code block more symmetrical (it's not required though). It also 
+    #illustrates that you can apply an underscore to any task and it will be stripped by Antwrap. 
+    @ant._if(){
+      _equals(:arg1 => "${bar}", :arg2 => "bar")
+      _then(){
+        echo(:message => "if 1 is equal")
+      }
+      _else(){
+        echo(:message => "if 1 is not equal")
+      }
+    }
+</code>
+</li>
+</pre>
+
+<pre><li>Content data is added via a 'pcdata' attribute:
+
+<code lang="ruby">
+    @ant.echo(:pcdata =&gt; "&lt;foo&amp;bar&gt;")
+</code>
+</li>
+
+<li>Antwrap includes a conversion script to take an existing Ant build file and convert it to a rake file. It will
+convert each Ant Target into a JRake task. It will also convert each and every Any Task into an Antwrap method call.
+Ant tasks that conflict with Ruby keywords are prepended with an
+underscore (see above).
+
+</li>
+<li>Antwrap is a Beta release. I'd love any feedback you can provide on your experence with it.
+There are no 3rd party jars required other than the Ant jar files in your JRuby Classpath.
+</li></pre>
+
+</ul>
+Comments or Questions? <br>
+
+Caleb Powell <br>
+caleb.powell@gmail.com <br>
+
+</body></html>

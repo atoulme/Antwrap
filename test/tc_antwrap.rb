@@ -15,16 +15,16 @@ class TestAntwrap < Test::Unit::TestCase
     #   @output_dir = ENV['PWD'] + '/output'
     #   @resource_dir = ENV['PWD'] + '/test-resources'
     #   The following is a workaround
-    current_dir = Java::java.lang.System.getProperty("user.dir")
-    @ant_proj_props = {:name=>"testProject", :basedir=>current_dir, :declarative=>true, 
+    @current_dir = Java::java.lang.System.getProperty("user.dir")
+    @ant_proj_props = {:name=>"testProject", :basedir=>@current_dir, :declarative=>true, 
                         :logger=>Logger.new(STDOUT), :loglevel=>Logger::DEBUG}
     @ant = AntProject.new(@ant_proj_props)
     assert(@ant_proj_props[:name] == @ant.name())
     assert(@ant_proj_props[:basedir] == @ant.basedir())
     assert(@ant_proj_props[:declarative] == @ant.declarative())
     
-    @output_dir = current_dir + '/test/output'
-    @resource_dir = current_dir + '/test/test-resources'
+    @output_dir = @current_dir + '/test/output'
+    @resource_dir = @current_dir + '/test/test-resources'
     
     if File.exists?(@output_dir)
       FileUtils.remove_dir(@output_dir)
@@ -32,10 +32,16 @@ class TestAntwrap < Test::Unit::TestCase
     FileUtils.mkdir(@output_dir, :mode => 0775)
   end
   
-  def teardown
-    
+  def test_antproject_init
+    @ant_proj_props = {:name=>"testProject", :declarative=>true, 
+                        :logger=>Logger.new(STDOUT), :loglevel=>Logger::ERROR}
+    ant_proj = AntProject.new(@ant_proj_props)
+    assert(@ant_proj_props[:name] == ant_proj.name())
+    assert(@current_dir == ant_proj.basedir())
+    assert(@ant_proj_props[:declarative] == ant_proj.declarative())
+    assert(@ant_proj_props[:logger] == ant_proj.logger())
   end
-  
+      
   def test_unzip_task
     assert_absent @output_dir + '/parent/FooBarParent.class'
     task = @ant.unzip(:src => @resource_dir + '/parent.jar',
@@ -128,7 +134,7 @@ class TestAntwrap < Test::Unit::TestCase
     
     @ant.property(:name => 'output_dir', :value => @output_dir)
     @ant.property(:name => 'resource_dir', :value =>@resource_dir)
-    @ant.jvm(:classname => 'foo.bar.FooBar', :fork => 'false') {
+    @ant._java(:classname => 'foo.bar.FooBar', :fork => 'false') {
       arg(:value => 'argOne')
       classpath(){
         pathelement(:location => '${output_dir}/classes')
@@ -142,6 +148,7 @@ class TestAntwrap < Test::Unit::TestCase
   
   def test_echo_task
     @ant.echo(:message => "Antwrap is running an Echo task", :level => 'info')
+    @ant.echo(:pcdata => "<foo&bar>")
   end
   
   def test_mkdir_task

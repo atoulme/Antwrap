@@ -187,11 +187,11 @@ class AntProject
   #   -A Logger instance. Defaults to Logger.new(STDOUT)
   # :loglevel=><em>The level to set the logger to</em>
   #   -Defaults to Logger::ERROR
-  def initialize(options={})
+  def initialize(options=Hash.new)
     @project= ApacheAnt::Project.new
     @project.name= options[:name] || ''
     @project.default= ''
-    @project.basedir= options[:basedir] || ''
+    @project.basedir= options[:basedir] || '.'
     @project.init
     self.declarative= options[:declarative] || true      
     default_logger = ApacheAnt::DefaultLogger.new
