@@ -8,13 +8,13 @@ require 'rubygems'
 
 SPEC = Gem::Specification.new do |s|
   s.name          = 'Antwrap'
-  s.version       = '0.2'
+  s.version       = '0.3'
   s.author        = 'Caleb Powell'
   s.email         = 'caleb.powell@gmail.com'
   s.homepage      = 'http://rubyforge.org/projects/antwrap/'
   s.platform      = Gem::Platform::RUBY
-  s.summary       = "A JRuby module that wraps the Apache Ant build tool"
-  candidates      = Dir.glob("{lib,test}/**/*")
+  s.summary       = "A JRuby module that wraps the Apache Ant build tool, enabling Ant Tasks to be invoked from a JRuby script."
+  candidates      = Dir.glob("{lib,test,docs}/**/*")
   s.files         = candidates.delete_if do |item|
                       item.include?(".svn")
                     end
