@@ -24,23 +24,20 @@ end
 class AntTask
   private
   @@task_stack = Array.new
-  attr_reader :unknown_element, :project, :taskname, :logger
+  attr_reader :unknown_element, :project, :taskname, :logger, :executed
   
   public  
   def initialize(taskname, antProject, attributes, proc)
-    if(taskname[0,1] == "_")
-      taskname = taskname[1, taskname.length-1]
-    end
+    taskname = taskname[1, taskname.length-1] if taskname[0,1] == "_"
     @logger = antProject.logger
-    @logger.debug("AntTask.taskname: #{taskname}, antProject:#{antProject}, atts:#{attributes.to_s}, proc:#{proc.to_s}")
+    @logger.debug("AntTask: #{taskname}")
     @taskname = taskname
     @project_wrapper = antProject
     @project = antProject.project()
     @logger.debug(@project)
     @unknown_element = create_unknown_element(@project, taskname)
-    @logger.debug("1")
+    
     addAttributes(attributes)
-    @logger.debug("2")
     
     if proc
       @logger.debug("task_stack.push #{taskname} >> #{@@task_stack}") 
@@ -55,43 +52,52 @@ class AntTask
       proc.instance_eval &proc
       @@task_stack.pop 
     end
-    @logger.debug("3")
     
   end
   
   def create_unknown_element(project, taskname)
+    
     unknown_element = ApacheAnt::UnknownElement.new(taskname)
     unknown_element.project= project
     unknown_element.owningTarget= ApacheAnt::Target.new()
-    unknown_element.namespace= ''
-    unknown_element.QName= taskname
-    unknown_element.taskType= taskname
     unknown_element.taskName= taskname
+    
+    if(@project_wrapper.ant_version >= 1.6)
+      unknown_element.taskType= taskname
+      unknown_element.namespace= ''
+      unknown_element.QName= taskname
+    end
+    
     return unknown_element
+    
   end
   
   def addAttributes(attributes)
+    
+    return if attributes == nil
+    
     wrapper = ApacheAnt::RuntimeConfigurable.new(@unknown_element, @unknown_element.getTaskName());
-    attributes.each do |key, val| 
-      if(key.to_s != 'pcdata')
-        wrapper.setAttribute(key.to_s, val)
-      else
-        wrapper.addText(val)
+    outer_func = lambda{ |key, val, tfunc|  key == 'pcdata' ? wrapper.addText(val) : tfunc.call(key, val) }
+    
+    if(@project_wrapper.ant_version >= 1.6)
+      attributes.each do |key, val| 
+        outer_func.call(key.to_s, val, lambda{|k,v| wrapper.setAttribute(k, val)}) 
       end
-    end unless attributes == nil
+    else  
+      @unknown_element.setRuntimeConfigurableWrapper(wrapper)
+      attribute_list = org.xml.sax.helpers.AttributeListImpl.new()
+      attributes.each do |key, val| 
+        outer_func.call(key.to_s, val, lambda{|k,v| attribute_list.addAttribute(k, 'CDATA', v)})
+      end
+      wrapper.setAttributes(attribute_list)
+    end
+    
   end
   
   def method_missing(sym, *args)
-    @logger.debug("AntTask.method_missing sym[#{sym.to_s}]")
     begin
-      proc = block_given? ? Proc.new : nil 
-      if(@project_wrapper.ant_version < 1.6)
-        @logger.debug("Creating a 1.5. task")
-        task = Ant15Task.new(sym.to_s, @project_wrapper, args[0], proc)
-      else
-        task = AntTask.new(sym.to_s, @project_wrapper, args[0], proc)
-      end
-      
+      @logger.debug("AntTask.method_missing sym[#{sym.to_s}]")
+      task = AntTask.new(sym.to_s, @project_wrapper, args[0], block_given? ? Proc.new : nil)
       self.add(task)
     rescue StandardError
       @logger.error("AntTask.method_missing error:" + $!)
@@ -99,7 +105,7 @@ class AntTask
   end  
   
   def add(child)
-    @logger.debug("adding child[#{child.unknown_element().getTaskName()}] to [#{@unknown_element.getTaskName()}]")
+    @logger.debug("adding child[#{child.taskname}] to [#{@taskname}]")
     @unknown_element.addChild(child.unknown_element())
     @unknown_element.getRuntimeConfigurableWrapper().addChild(child.unknown_element().getRuntimeConfigurableWrapper())
   end
@@ -108,52 +114,6 @@ class AntTask
     @unknown_element.maybeConfigure
     @unknown_element.execute
     @executed = true
-  end
-  
-  def was_executed?
-    @executed
-  end
-  
-  #overridden. 'mkdir' conflicts wth the rake library.
-  def mkdir(attributes)
-    create_task('mkdir', attributes, (block_given? ? Proc.new : nil))
-  end  
-  
-  #overridden. 'copy' conflicts wth the rake library.
-  def copy(attributes)
-    create_task('copy', attributes, (block_given? ? Proc.new : nil))
-  end  
-  
-  #overridden. 'java' conflicts wth the JRuby library.
-  def jvm(attributes=Hash.new)
-    create_task('java', attributes, (block_given? ? Proc.new : nil))
-  end  
-  
-end
-
-class Ant15Task < AntTask
-  
-  def create_unknown_element(project, taskname)
-    unknown_element = ApacheAnt::UnknownElement.new(taskname)
-    unknown_element.project= project
-    unknown_element.owningTarget= ApacheAnt::Target.new()
-    unknown_element.taskName= taskname
-    return unknown_element
-  end
-  
-  def addAttributes(attributes)
-    wrapper = ApacheAnt::RuntimeConfigurable.new(@unknown_element, @unknown_element.getTaskName());
-    @unknown_element.setRuntimeConfigurableWrapper(wrapper)
-    attribute_list = org.xml.sax.helpers.AttributeListImpl.new
-    
-    attributes.each do |key, val| 
-      if(key.to_s != 'pcdata')
-        attribute_list.addAttribute(key.to_s, 'CDATA', val)
-      else
-        wrapper.addText(val)
-      end
-    end unless attributes == nil
-    wrapper.setAttributes(attribute_list)
   end
   
 end
@@ -211,25 +171,15 @@ class AntProject
     @logger.debug("Antproject.create_task.taskname = " + taskname)
     @logger.debug("Antproject.create_task.attributes = " + attributes.to_s)
     
-    task = nil;
-    if(ant_version < 1.6)
-      task = Ant15Task.new(taskname, self, attributes, proc)
-    else
-      task = AntTask.new(taskname, self, attributes, proc)
-    end
-    
+    task = AntTask.new(taskname, self, attributes, proc)
     task.execute if declarative
-    if taskname == 'macrodef'
-      @logger.debug("Pushing #{attributes[:name]} to tasks")
-    end
-    task
+    return task
   end
   
   def method_missing(sym, *args)
     begin
-      @logger.info("AntProject.method_missing sym[#{sym.to_s}]")
-      proc = block_given? ? Proc.new : nil 
-      return create_task(sym.to_s, args[0], proc)
+      @logger.debug("AntProject.method_missing sym[#{sym.to_s}]")
+      return create_task(sym.to_s, args[0], block_given? ? Proc.new : nil)
     rescue
       @logger.error("Error instantiating task[#{sym.to_s}]" + $!)
     end
