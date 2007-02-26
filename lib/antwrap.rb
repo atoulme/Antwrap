@@ -4,11 +4,9 @@
 #
 # Licensed under the LGPL, see the file COPYING in the distribution
 #
-require 'fileutils'
-require 'logger'
-require 'java'
 
 module ApacheAnt
+  require 'java'
   include_class "org.apache.tools.ant.UnknownElement"
   include_class "org.apache.tools.ant.RuntimeConfigurable"
   include_class "org.apache.tools.ant.Project"
@@ -18,6 +16,7 @@ module ApacheAnt
 end
 
 module JavaLang
+  require 'java'
   include_class "java.lang.System"
 end
 
@@ -119,7 +118,7 @@ class AntTask
 end
 
 class AntProject
-  
+  require 'logger'
   attr :project, false
   attr :version, false
   attr :ant_version, true
@@ -193,18 +192,27 @@ class AntProject
     return @project.getBaseDir().getAbsolutePath();
   end
   
-  #overridden. 'mkdir' conflicts wth the rake library.
+  #This method invokes create_task. It is here to prevent conflicts wth the rake library
+  #over the 'mkdir' symbol.
   def mkdir(attributes)
     create_task('mkdir', attributes, (block_given? ? Proc.new : nil))
   end  
   
-  #overridden. 'copy' conflicts wth the rake library.
+  #This method invokes create_task. It is here to prevent conflicts wth the rake library
+  #over the 'copy' symbol.
   def copy(attributes)
     create_task('copy', attributes, (block_given? ? Proc.new : nil))
   end  
   
-  #overridden. 'java' conflicts wth the JRuby library.
+  #This method invokes create_task. It is here to prevent conflicts wth the JRuby library
+  #over the 'java' symbol.
   def jvm(attributes=Hash.new)
+    create_task('java', attributes, (block_given? ? Proc.new : nil))
+  end  
+  
+  #This method invokes create_task. It is here to prevent conflicts wth the JRuby library
+  #over the 'java' symbol.
+  def java(attributes=Hash.new)
     create_task('java', attributes, (block_given? ? Proc.new : nil))
   end  
   

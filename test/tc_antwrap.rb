@@ -134,7 +134,7 @@ class TestAntwrap < Test::Unit::TestCase
     
     @ant.property(:name => 'output_dir', :value => @output_dir)
     @ant.property(:name => 'resource_dir', :value =>@resource_dir)
-    @ant._java(:classname => 'foo.bar.FooBar', :fork => 'false') {
+    @ant.java(:classname => 'foo.bar.FooBar', :fork => 'false') {
       arg(:value => 'argOne')
       classpath(){
         pathelement(:location => '${output_dir}/classes')
