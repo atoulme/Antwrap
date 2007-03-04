@@ -53,29 +53,10 @@ circumstances):
 <pre><li>There are some reserved words that we have to work around. For example, Ant-Contrib tasks such as 'if' and 'else'
 conflict with the Ruby reserved words. Under most circumstances, you won't need to use these tasks (indeed, the 
 awkwardness of conditional operations in Ant scripts is likely one of the reasons why you want to move to a build system 
-such as Rake). 
-
-Nevertheless, there are that occasions demands it. One such situation is the &lt;java&gt; Ant task. The 'java'
-symbol conflicts with a symbol in the JRuby library. 
-
-Reserved words like this can be worked around by simply prepending an underscore character ('_') to the task:
+such as Rake). Nevertheless, there are that occasions demands it. Reserved words like this can be worked around by simply prepending an 
+underscore character ('_') to the task:
 
 <code lang="ruby">
-    @ant._java(:classname => 'foo.bar.FooBar', :fork => 'false') {
-      arg(:value => 'argOne')
-      classpath(){
-        pathelement(:location => '${output_dir}/classes')
-        pathelement(:location => '${resource_dir}/parent.jar')
-      }
-      arg(:value => 'argTwo')
-      jvmarg(:value => 'client')
-      sysproperty(:key=> 'antwrap', :value => 'coolio')
-    }
-    
-    #Because the 'java' Ant task is likely to be very popular, there is an alias you can use called 'jvm'.
-    #The above task could be rewritten as:
-    @ant.jvm(:classname => 'foo.bar.FooBar', :fork => 'false') {...
-    
     #This is an example of the Ant-Contrib tasks.
     #note: I added an underscore to 'equals' even though it isn't a reserved word. 
     #This makes the code block more symmetrical (it's not required though). It also 
