@@ -7,6 +7,26 @@
 require 'test/unit'
 require 'fileutils'
 require '../lib/antwrap.rb'
+require 'java'
+class TestStream < java.io.PrintStream
+    attr_reader :last_line
+    
+    def initialise(out)
+      self.super(out)
+    end
+    
+    def println(s)
+      puts "s"
+      @last_line = s
+      self.super(s)
+    end
+    
+    def print(s)
+      puts "s"
+      @last_line = s
+      self.super(s)
+    end
+end
 
 class TestAntwrap < Test::Unit::TestCase
   
@@ -147,7 +167,14 @@ class TestAntwrap < Test::Unit::TestCase
   end
   
   def test_echo_task
-    @ant.echo(:message => "Antwrap is running an Echo task", :level => 'info')
+#    stream = TestStream.new(java.lang.System.out)
+#    
+#    @ant = AntProject.new({:name=>"testProject", :basedir=>@current_dir, :declarative=>true, 
+#                        :logger=>Logger.new(STDOUT), :loglevel=>Logger::DEBUG, :outputstr => stream})                            
+    msg = "Antwrap is running an Echo task"                    
+    @ant.echo(:message => msg, :level => 'info')
+#    assert(stream.last_line, stream.last_line == msg)
+    
     @ant.echo(:pcdata => "<foo&bar>")
   end
   

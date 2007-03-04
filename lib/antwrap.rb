@@ -7,12 +7,12 @@
 
 module ApacheAnt
   require 'java'
-  include_class "org.apache.tools.ant.UnknownElement"
-  include_class "org.apache.tools.ant.RuntimeConfigurable"
-  include_class "org.apache.tools.ant.Project"
   include_class "org.apache.tools.ant.DefaultLogger"
-  include_class "org.apache.tools.ant.Target"
   include_class "org.apache.tools.ant.Main"
+  include_class "org.apache.tools.ant.Project"
+  include_class "org.apache.tools.ant.RuntimeConfigurable"
+  include_class "org.apache.tools.ant.Target"
+  include_class "org.apache.tools.ant.UnknownElement"
 end
 
 module JavaLang
@@ -29,12 +29,12 @@ class AntTask
   def initialize(taskname, antProject, attributes, proc)
     taskname = taskname[1, taskname.length-1] if taskname[0,1] == "_"
     @logger = antProject.logger
-    @logger.debug("AntTask: #{taskname}")
     @taskname = taskname
     @project_wrapper = antProject
     @project = antProject.project()
-    @logger.debug(@project)
+    @logger.debug(antProject.to_s)
     @unknown_element = create_unknown_element(@project, taskname)
+    @logger.debug(to_s)
     
     addAttributes(attributes)
     
@@ -115,6 +115,10 @@ class AntTask
     @executed = true
   end
   
+  def to_s
+    return self.class.name + "[#{@taskname}]"
+  end 
+  
 end
 
 class AntProject
@@ -155,8 +159,8 @@ class AntProject
     self.declarative= options[:declarative] || true      
     default_logger = ApacheAnt::DefaultLogger.new
     default_logger.messageOutputLevel= 2
-    default_logger.outputPrintStream= JavaLang::System.out
-    default_logger.errorPrintStream= JavaLang::System.err
+    default_logger.outputPrintStream= options[:outputstr] || JavaLang::System.out
+    default_logger.errorPrintStream= options[:errorstr] || JavaLang::System.err
     default_logger.emacsMode= false
     @project.addBuildListener default_logger
     @version = ApacheAnt::Main.getAntVersion
@@ -192,23 +196,9 @@ class AntProject
     return @project.getBaseDir().getAbsolutePath();
   end
   
-  #This method invokes create_task. It is here to prevent conflicts wth the rake library
-  #over the 'mkdir' symbol.
-  def mkdir(attributes)
-    create_task('mkdir', attributes, (block_given? ? Proc.new : nil))
-  end  
-  
-  #This method invokes create_task. It is here to prevent conflicts wth the rake library
-  #over the 'copy' symbol.
-  def copy(attributes)
-    create_task('copy', attributes, (block_given? ? Proc.new : nil))
-  end  
-  
-  #This method invokes create_task. It is here to prevent conflicts wth the JRuby library
-  #over the 'java' symbol.
-  def jvm(attributes=Hash.new)
-    create_task('java', attributes, (block_given? ? Proc.new : nil))
-  end  
+  def to_s
+    return self.class.name + "[#{@project.name}]"
+  end 
   
   #This method invokes create_task. It is here to prevent conflicts wth the JRuby library
   #over the 'java' symbol.
