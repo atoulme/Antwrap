@@ -38,7 +38,7 @@ upon the invocation of the execute() method (this is a more Object Oriented appr
 circumstances):
 
 <code lang="ruby">
-    @ant = AntProject.new({:name=&gt"FooProject", :declarative=&gttrue})
+    @ant = AntProject.new({:name=&gt"FooProject", :declarative=&gt false})
 
     javac_task = @ant.javac(:srcdir =&gt; "test", :destdir =&gt; "classes"){
         classpath(:refid =&gt; "common.class.path")

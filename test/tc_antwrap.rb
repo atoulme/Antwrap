@@ -6,40 +6,37 @@
 #
 require 'test/unit'
 require 'fileutils'
-require '../lib/antwrap.rb'
-require 'java'
-class TestStream < java.io.PrintStream
-    attr_reader :last_line
-    
-    def initialise(out)
-      self.super(out)
-    end
-    
-    def println(s)
-      puts "s"
-      @last_line = s
-      self.super(s)
-    end
-    
-    def print(s)
-      puts "s"
-      @last_line = s
-      self.super(s)
-    end
-end
-
+$LOAD_PATH.push(ENV['PWD'] + '/lib')
+require 'antwrap'
+require 'logger'
+#class TestStream < java.io.PrintStream
+#    attr_reader :last_line
+#    
+#    def initialise(out)
+#      self.super(out)
+#    end
+#    
+#    def println(s)
+#      puts "s"
+#      @last_line = s
+#      self.super(s)
+#    end
+#    
+#    def print(s)
+#      puts "s"
+#      @last_line = s
+#      self.super(s)
+#    end
+#end
 class TestAntwrap < Test::Unit::TestCase
   
   def setup
-    #   ENV is broken as of JRuby 0.9.2 but patched in 0.9.3 (see: http://jira.codehaus.org/browse/JRUBY-349)
-    #   @output_dir = ENV['PWD'] + '/output'
-    #   @resource_dir = ENV['PWD'] + '/test-resources'
-    #   The following is a workaround
-    @current_dir = Java::java.lang.System.getProperty("user.dir")
+    @current_dir = ENV['PWD']
     @ant_proj_props = {:name=>"testProject", :basedir=>@current_dir, :declarative=>true, 
                         :logger=>Logger.new(STDOUT), :loglevel=>Logger::DEBUG}
     @ant = AntProject.new(@ant_proj_props)
     assert(@ant_proj_props[:name] == @ant.name())
+    
     assert(@ant_proj_props[:basedir] == @ant.basedir())
     assert(@ant_proj_props[:declarative] == @ant.declarative())
     
@@ -106,11 +103,11 @@ class TestAntwrap < Test::Unit::TestCase
     assert_absent @output_dir + '/classes/foo/bar/FooBar.class'
     @ant.property(:name => 'pattern', :value => '**/*.jar') 
     @ant.property(:name => 'resource_dir', :value => @resource_dir)
-    @ant.path(:id => 'common.class.path'){
-      fileset(:dir => '${resource_dir}'){
-        include(:name => '${pattern}')
+      @ant.path(:id => 'common.class.path'){
+        fileset(:dir => '${resource_dir}'){
+          include(:name => '${pattern}')
+        }
       }
-    }
     
     @ant.javac(:srcdir => @resource_dir + '/src', 
     :destdir => @output_dir + '/classes',

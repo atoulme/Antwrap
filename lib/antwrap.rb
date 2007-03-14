@@ -5,26 +5,44 @@
 # Licensed under the LGPL, see the file COPYING in the distribution
 #
 
-module ApacheAnt
-  require 'java'
-  include_class "org.apache.tools.ant.DefaultLogger"
-  include_class "org.apache.tools.ant.Main"
-  include_class "org.apache.tools.ant.Project"
-  include_class "org.apache.tools.ant.RuntimeConfigurable"
-  include_class "org.apache.tools.ant.Target"
-  include_class "org.apache.tools.ant.UnknownElement"
-end
-
-module JavaLang
-  require 'java'
-  include_class "java.lang.System"
+if(RUBY_PLATFORM == 'java')
+  require 'jruby_modules.rb'
+else
+  require 'rjb_modules.rb'
 end
 
 class AntTask
   private
   @@task_stack = Array.new
-  attr_reader :unknown_element, :project, :taskname, :logger, :executed
+  attr_accessor(:unknown_element, :project, :taskname, :logger, :executed)
   
+  def create_unknown_element(project, taskname)
+    
+    element = ApacheAnt::UnknownElement.new(taskname)
+    element.setProject(project)
+    element.setOwningTarget(ApacheAnt::Target.new())
+    element.setTaskName(taskname)
+    
+    if(@project_wrapper.ant_version >= 1.6)
+      element.setTaskType(taskname)
+      element.setNamespace('')
+      element.setQName(taskname)
+    end
+    
+    return element
+    
+  end
+  
+  def method_missing(sym, *args)
+    begin
+      @logger.debug("AntTask.method_missing sym[#{sym.to_s}]")
+      task = AntTask.new(sym.to_s, @project_wrapper, args[0], block_given? ? Proc.new : nil)
+      self.add(task)
+    rescue StandardError
+      @logger.error("AntTask.method_missing error:" + $!)
+    end
+  end  
+    
   public  
   def initialize(taskname, antProject, attributes, proc)
     taskname = taskname[1, taskname.length-1] if taskname[0,1] == "_"
@@ -39,7 +57,7 @@ class AntTask
     addAttributes(attributes)
     
     if proc
-      @logger.debug("task_stack.push #{taskname} >> #{@@task_stack}") 
+#      @logger.debug("task_stack.push #{taskname} >> #{@@task_stack}") 
       @@task_stack.push self
       
       singleton_class = class << proc; self; end
@@ -54,23 +72,9 @@ class AntTask
     
   end
   
-  def create_unknown_element(project, taskname)
-    
-    unknown_element = ApacheAnt::UnknownElement.new(taskname)
-    unknown_element.project= project
-    unknown_element.owningTarget= ApacheAnt::Target.new()
-    unknown_element.taskName= taskname
-    
-    if(@project_wrapper.ant_version >= 1.6)
-      unknown_element.taskType= taskname
-      unknown_element.namespace= ''
-      unknown_element.QName= taskname
-    end
-    
-    return unknown_element
-    
-  end
   
+  # Sets each attribute on the AntTask instance.
+  # :attributes - is a Hash.
   def addAttributes(attributes)
     
     return if attributes == nil
@@ -93,22 +97,17 @@ class AntTask
     
   end
   
-  def method_missing(sym, *args)
-    begin
-      @logger.debug("AntTask.method_missing sym[#{sym.to_s}]")
-      task = AntTask.new(sym.to_s, @project_wrapper, args[0], block_given? ? Proc.new : nil)
-      self.add(task)
-    rescue StandardError
-      @logger.error("AntTask.method_missing error:" + $!)
-    end
-  end  
-  
+  #Add <em>child</em> as a child of this task. 
   def add(child)
-    @logger.debug("adding child[#{child.taskname}] to [#{@taskname}]")
-    @unknown_element.addChild(child.unknown_element())
-    @unknown_element.getRuntimeConfigurableWrapper().addChild(child.unknown_element().getRuntimeConfigurableWrapper())
+#    @logger.debug("adding child[#{child.taskname()}] to [#{@taskname}]")
+    @unknown_element.addChild(child.getUnknownElement())
+    @unknown_element.getRuntimeConfigurableWrapper().addChild(child.getUnknownElement().getRuntimeConfigurableWrapper())
   end
   
+  def getUnknownElement
+    return @unknown_element
+  end
+  #Invokes the AntTask. 
   def execute
     @unknown_element.maybeConfigure
     @unknown_element.execute
@@ -152,17 +151,17 @@ class AntProject
   #   -Defaults to Logger::ERROR
   def initialize(options=Hash.new)
     @project= ApacheAnt::Project.new
-    @project.name= options[:name] || ''
-    @project.default= ''
-    @project.basedir= options[:basedir] || '.'
+    @project.setName(options[:name] || '')
+    @project.setDefault('')
+    @project.setBasedir(options[:basedir] || '.')
     @project.init
     self.declarative= options[:declarative] || true      
     default_logger = ApacheAnt::DefaultLogger.new
-    default_logger.messageOutputLevel= 2
-    default_logger.outputPrintStream= options[:outputstr] || JavaLang::System.out
-    default_logger.errorPrintStream= options[:errorstr] || JavaLang::System.err
-    default_logger.emacsMode= false
-    @project.addBuildListener default_logger
+    default_logger.setMessageOutputLevel(2)
+    default_logger.setOutputPrintStream(options[:outputstr] || JavaLang::System.out)
+    default_logger.setErrorPrintStream(options[:errorstr] || JavaLang::System.err)
+    default_logger.setEmacsMode(false)
+    @project.addBuildListener(default_logger)
     @version = ApacheAnt::Main.getAntVersion
     @ant_version = @version[/\d\.\d\.\d/].to_f
     @logger = options[:logger] || Logger.new(STDOUT)
@@ -171,8 +170,8 @@ class AntProject
   end
   
   def create_task(taskname, attributes, proc)
-    @logger.debug("Antproject.create_task.taskname = " + taskname)
-    @logger.debug("Antproject.create_task.attributes = " + attributes.to_s)
+    @logger.debug("AntProject.create_task.taskname = " + taskname)
+    @logger.debug("AntProject.create_task.attributes = " + attributes.to_s)
     
     task = AntTask.new(taskname, self, attributes, proc)
     task.execute if declarative
@@ -188,18 +187,20 @@ class AntProject
     end
   end
   
+  #The Ant Project's name. Default is ''.
   def name()
-    return @project.name
+    return @project.getName
   end
   
+  #The Ant Project's basedir. Default is '.'.
   def basedir()
     return @project.getBaseDir().getAbsolutePath();
   end
   
   def to_s
-    return self.class.name + "[#{@project.name}]"
+    return self.class.name + "[#{@project.getName()}]"
   end 
-  
+
   #This method invokes create_task. It is here to prevent conflicts wth the JRuby library
   #over the 'java' symbol.
   def java(attributes=Hash.new)
