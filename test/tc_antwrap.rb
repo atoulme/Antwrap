@@ -249,6 +249,9 @@ class TestAntwrap < Test::Unit::TestCase
 
   end
   
+  def test_tstamp
+    @ant.tstamp
+  end
   private 
   def assert_exists(file_path)
     assert(File.exists?(file_path), "Does not exist[#{file_path}]")

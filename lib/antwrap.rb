@@ -23,6 +23,9 @@ class AntTask
     element.setOwningTarget(ApacheAnt::Target.new())
     element.setTaskName(taskname)
     
+    #dnr. This initializes the Task's Wrapper object and prevents a NullPointerExeption
+    element.getRuntimeConfigurableWrapper()
+    
     if(@project_wrapper.ant_version >= 1.6)
       element.setTaskType(taskname)
       element.setNamespace('')
@@ -57,7 +60,7 @@ class AntTask
     addAttributes(attributes)
     
     if proc
-#      @logger.debug("task_stack.push #{taskname} >> #{@@task_stack}") 
+      @logger.debug("task_stack.push #{taskname} >> #{@@task_stack}") 
       @@task_stack.push self
       
       singleton_class = class << proc; self; end
@@ -184,6 +187,7 @@ class AntProject
       return create_task(sym.to_s, args[0], block_given? ? Proc.new : nil)
     rescue
       @logger.error("Error instantiating task[#{sym.to_s}]" + $!)
+      throw $!
     end
   end
   
