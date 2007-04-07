@@ -5,11 +5,7 @@
 # Licensed under the LGPL, see the file COPYING in the distribution
 #
 
-if(RUBY_PLATFORM == 'java')
-  require 'jruby_modules.rb'
-else
-  require 'rjb_modules.rb'
-end
+require 'antwrap_utilities.rb'
 
 class AntTask
   private
@@ -45,7 +41,7 @@ class AntTask
       @logger.error("AntTask.method_missing error:" + $!)
     end
   end  
-    
+  
   public  
   def initialize(taskname, antProject, attributes, proc)
     taskname = taskname[1, taskname.length-1] if taskname[0,1] == "_"
@@ -102,7 +98,7 @@ class AntTask
   
   #Add <em>child</em> as a child of this task. 
   def add(child)
-#    @logger.debug("adding child[#{child.taskname()}] to [#{@taskname}]")
+    #    @logger.debug("adding child[#{child.taskname()}] to [#{@taskname}]")
     @unknown_element.addChild(child.getUnknownElement())
     @unknown_element.getRuntimeConfigurableWrapper().addChild(child.getUnknownElement().getRuntimeConfigurableWrapper())
   end
@@ -125,12 +121,13 @@ end
 
 class AntProject
   require 'logger'
+  
   attr :project, false
   attr :version, false
   attr :ant_version, true
   attr :declarative, true
   attr :logger, true
-  
+  @@classes_loaded = false
   # Create an AntProject. Parameters are specified via a hash:
   # :name=><em>project_name</em>
   #   -A String indicating the name of this project. Corresponds to the 
@@ -153,6 +150,11 @@ class AntProject
   # :loglevel=><em>The level to set the logger to</em>
   #   -Defaults to Logger::ERROR
   def initialize(options=Hash.new)
+    if(@@classes_loaded != true)
+      loader = AntwrapClassLoader.new
+      loader.load_ant_libs("/Users/caleb/tools/apache-ant-1.7.0")
+      @@classes_loaded = true
+    end
     @project= ApacheAnt::Project.new
     @project.setName(options[:name] || '')
     @project.setDefault('')
@@ -191,7 +193,7 @@ class AntProject
     end
   end
   
-  #The Ant Project's name. Default is ''.
+  #The Ant Project's name. Default is '.'
   def name()
     return @project.getName
   end
@@ -204,11 +206,11 @@ class AntProject
   def to_s
     return self.class.name + "[#{@project.getName()}]"
   end 
-
+  
   #This method invokes create_task. It is here to prevent conflicts wth the JRuby library
   #over the 'java' symbol.
-  def java(attributes=Hash.new)
-    create_task('java', attributes, (block_given? ? Proc.new : nil))
-  end  
+#  def java(attributes=Hash.new)
+#    create_task('java', attributes, (block_given? ? Proc.new : nil))
+#  end  
   
 end

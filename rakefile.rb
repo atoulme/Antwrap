@@ -10,7 +10,7 @@ require 'rake/gempackagetask'
 
 def create_spec(spec, platform)
   spec.name          = 'Antwrap'
-  spec.version       = '0.5'
+  spec.version       = '0.5.1'
   spec.author        = 'Caleb Powell'
   spec.email         = 'caleb.powell@gmail.com'
   spec.homepage      = 'http://rubyforge.org/projects/antwrap/'
@@ -44,5 +44,5 @@ Rake::GemPackageTask.new(jruby_spec) do |pkg|
   puts "Creating JRuby Gem"
 end
 
-task :gems => [:pkg => '/Antwrap-0.5.gem'] 
+task :gems => [:pkg => '/Antwrap-0.5.1.gem'] 
 
