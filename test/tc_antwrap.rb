@@ -32,16 +32,19 @@ class TestAntwrap < Test::Unit::TestCase
   
   def setup
     @current_dir = ENV['PWD']
+    @output_dir = @current_dir + '/test/output'
+    @resource_dir = @current_dir + '/test/test-resources'
+    @ant_home = @resource_dir + "/apache-ant-1.7.0"
+#    @ant_home = "/Users/caleb/tools/apache-ant-1.6.5"
+#    @ant_home = "/Users/caleb/tools/apache-ant-1.5.4"
     @ant_proj_props = {:name=>"testProject", :basedir=>@current_dir, :declarative=>true, 
-                        :logger=>Logger.new(STDOUT), :loglevel=>Logger::DEBUG}
+                        :logger=>Logger.new(STDOUT), :loglevel=>Logger::DEBUG, :ant_home => @ant_home}
     @ant = AntProject.new(@ant_proj_props)
     assert(@ant_proj_props[:name] == @ant.name())
     
     assert(@ant_proj_props[:basedir] == @ant.basedir())
     assert(@ant_proj_props[:declarative] == @ant.declarative())
     
-    @output_dir = @current_dir + '/test/output'
-    @resource_dir = @current_dir + '/test/test-resources'
     
     if File.exists?(@output_dir)
       FileUtils.remove_dir(@output_dir)
@@ -221,7 +224,7 @@ class TestAntwrap < Test::Unit::TestCase
   
   def test_ant_contrib
 
-    return if @ant.ant_version < 1.6
+    return if @ant.ant_version() < 1.6
 
     @ant.taskdef(:resource => "net/sf/antcontrib/antlib.xml")
 

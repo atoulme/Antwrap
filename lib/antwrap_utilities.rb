@@ -1,41 +1,30 @@
-module Find
+if(RUBY_PLATFORM == 'java')
+  require 'java'
+  autoload :ApacheAnt, 'jruby_modules.rb'
+  autoload :JavaLang, 'jruby_modules.rb'
+else
+  require 'rubygems'
+  require 'rjb'
+  autoload :ApacheAnt, 'rjb_modules.rb'
+  autoload :JavaLang, 'rjb_modules.rb'
+end
+
+module AntwrapClassLoader
   require 'find'
   def match(*paths)
     matched=[]
-    find(*paths){ |path| matched << path if yield path }
+    Find.find(*paths){ |path| matched << path if yield path }
     return matched
   end
-  module_function :match
-end
-
-class AntwrapClassLoader
-  def load_ant_libs(ant_home)
-    puts "loading ant jar files"
-    jars = Find.match(ant_home + '/lib') {|p| ext = p[-4...p.size]; ext && ext.downcase == '.jar'} 
-    if(RUBY_PLATFORM == 'java')
-      require 'java'
-      jars.each {|jar| addURL(jar) }
-      require 'jruby_modules.rb'
-    else
-      require 'rubygems'
-      require 'rjb'
-      Rjb::load(jars.join(":"), [])
-      require 'rjb_modules.rb'
-    end
-    
-  end
   
-  def addURL(url)
-    begin
-      sysloader = java.lang.ClassLoader.getSystemClassLoader();
-      methods = java.lang.Class.forName("java.net.URLClassLoader").getDeclaredMethods()
-      add_url_method = methods.select { |m| m.getName() == "addURL" }[0]
-      add_url_method.setAccessible(true);
-      list = java.util.ArrayList.new
-      list.add(java.io.File.new(url).toURL())
-      add_url_method.invoke(sysloader, list.toArray());
-    rescue
-      puts "AntwrapClassLoader: Error loading #{url} [#{$!}]"
+  def load_ant_libs(ant_home)
+    puts "loading ant jar files. Ant_Home: #{ant_home}"
+    jars = match(ant_home + '/lib') {|p| ext = p[-4...p.size]; ext && ext.downcase == '.jar'} 
+    if(RUBY_PLATFORM == 'java')
+      jars.each {|jar| require jar }
+    else
+      Rjb::load(jars.join(":"), [])
     end
   end
+  module_function :match, :load_ant_libs
 end

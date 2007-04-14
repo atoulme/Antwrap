@@ -1,17 +1,48 @@
-# antwrap
+# antwrap.rb
 #
 # Copyright Caleb Powell 2007
 #
 # Licensed under the LGPL, see the file COPYING in the distribution
 #
-
-require 'antwrap_utilities.rb'
+require 'antwrap_utilities'
 
 class AntTask
-  private
   @@task_stack = Array.new
-  attr_accessor(:unknown_element, :project, :taskname, :logger, :executed)
   
+  public  
+  def initialize(taskname, antProject, attributes, proc)
+    taskname = taskname[1, taskname.length-1] if taskname[0,1] == "_"
+    @logger = antProject.logger
+    @taskname = taskname
+    @project_wrapper = antProject
+    @project = antProject.project()
+    @logger.debug(antProject.to_s)
+    @unknown_element = create_unknown_element(@project, taskname)
+    @logger.debug(to_s)
+    
+    add_attributes(attributes)
+    
+    if proc
+      @logger.debug("task_stack.push #{taskname} >> #{@@task_stack}") 
+      @@task_stack.push self
+      
+      singleton_class = class << proc; self; end
+      singleton_class.module_eval{
+        def method_missing(m, *a, &proc)
+          @@task_stack.last().send(m, *a, &proc)
+        end
+      }
+      proc.instance_eval &proc
+      @@task_stack.pop 
+    end
+    
+  end
+  
+  def to_s
+    return self.class.name + "[#{@taskname}]"
+  end 
+  
+  attr_accessor(:unknown_element, :project, :taskname, :logger, :executed)
   def create_unknown_element(project, taskname)
     
     element = ApacheAnt::UnknownElement.new(taskname)
@@ -19,7 +50,7 @@ class AntTask
     element.setOwningTarget(ApacheAnt::Target.new())
     element.setTaskName(taskname)
     
-    #dnr. This initializes the Task's Wrapper object and prevents a NullPointerExeption
+    #dnr. This initializes the Task's Wrapper object and prevents NullPointerExeption upon execution of the task
     element.getRuntimeConfigurableWrapper()
     
     if(@project_wrapper.ant_version >= 1.6)
@@ -42,39 +73,9 @@ class AntTask
     end
   end  
   
-  public  
-  def initialize(taskname, antProject, attributes, proc)
-    taskname = taskname[1, taskname.length-1] if taskname[0,1] == "_"
-    @logger = antProject.logger
-    @taskname = taskname
-    @project_wrapper = antProject
-    @project = antProject.project()
-    @logger.debug(antProject.to_s)
-    @unknown_element = create_unknown_element(@project, taskname)
-    @logger.debug(to_s)
-    
-    addAttributes(attributes)
-    
-    if proc
-      @logger.debug("task_stack.push #{taskname} >> #{@@task_stack}") 
-      @@task_stack.push self
-      
-      singleton_class = class << proc; self; end
-      singleton_class.module_eval{
-        def method_missing(m, *a, &proc)
-          @@task_stack.last().send(m, *a, &proc)
-        end
-      }
-      proc.instance_eval &proc
-      @@task_stack.pop 
-    end
-    
-  end
-  
-  
   # Sets each attribute on the AntTask instance.
   # :attributes - is a Hash.
-  def addAttributes(attributes)
+  def add_attributes(attributes)
     
     return if attributes == nil
     
@@ -99,13 +100,10 @@ class AntTask
   #Add <em>child</em> as a child of this task. 
   def add(child)
     #    @logger.debug("adding child[#{child.taskname()}] to [#{@taskname}]")
-    @unknown_element.addChild(child.getUnknownElement())
-    @unknown_element.getRuntimeConfigurableWrapper().addChild(child.getUnknownElement().getRuntimeConfigurableWrapper())
+    @unknown_element.addChild(child.unknown_element())
+    @unknown_element.getRuntimeConfigurableWrapper().addChild(child.unknown_element().getRuntimeConfigurableWrapper())
   end
-  
-  def getUnknownElement
-    return @unknown_element
-  end
+
   #Invokes the AntTask. 
   def execute
     @unknown_element.maybeConfigure
@@ -113,25 +111,26 @@ class AntTask
     @executed = true
   end
   
-  def to_s
-    return self.class.name + "[#{@taskname}]"
-  end 
-  
 end
 
 class AntProject
   require 'logger'
   
-  attr :project, false
-  attr :version, false
-  attr :ant_version, true
-  attr :declarative, true
-  attr :logger, true
+  private
   @@classes_loaded = false
+  
+  public
+  attr :project, false
+  attr :ant_version, false
+  attr_accessor(:declarative, :logger)
+  
   # Create an AntProject. Parameters are specified via a hash:
+  # :ant_home=><em>Ant basedir</em>
+  #   -A String indicating the location of the ANT_HOME directory. If provided, Antwrap will
+  #   load the classes from the ANT_HOME/lib dir. If ant_home is not provided, the Ant jar files
+  #   must be available in the CLASSPATH.   
   # :name=><em>project_name</em>
-  #   -A String indicating the name of this project. Corresponds to the 
-  #   'name' attrbute on an Ant project.  
+  #   -A String indicating the name of this project.
   # :basedir=><em>project_basedir</em>
   #   -A String indicating the basedir of this project. Corresponds to the 'basedir' attribute 
   #   on an Ant project.  
@@ -150,11 +149,11 @@ class AntProject
   # :loglevel=><em>The level to set the logger to</em>
   #   -Defaults to Logger::ERROR
   def initialize(options=Hash.new)
-    if(@@classes_loaded != true)
-      loader = AntwrapClassLoader.new
-      loader.load_ant_libs("/Users/caleb/tools/apache-ant-1.7.0")
+    if(!@@classes_loaded && options[:ant_home])
+      AntwrapClassLoader.load_ant_libs(options[:ant_home])
       @@classes_loaded = true
     end
+    
     @project= ApacheAnt::Project.new
     @project.setName(options[:name] || '')
     @project.setDefault('')
@@ -167,26 +166,19 @@ class AntProject
     default_logger.setErrorPrintStream(options[:errorstr] || JavaLang::System.err)
     default_logger.setEmacsMode(false)
     @project.addBuildListener(default_logger)
-    @version = ApacheAnt::Main.getAntVersion
-    @ant_version = @version[/\d\.\d\.\d/].to_f
+    @ant_version = ApacheAnt::Main.getAntVersion()[/\d\.\d\.\d/].to_f
     @logger = options[:logger] || Logger.new(STDOUT)
     @logger.level = options[:loglevel] || Logger::ERROR
-    @logger.debug(@version)
-  end
-  
-  def create_task(taskname, attributes, proc)
-    @logger.debug("AntProject.create_task.taskname = " + taskname)
-    @logger.debug("AntProject.create_task.attributes = " + attributes.to_s)
-    
-    task = AntTask.new(taskname, self, attributes, proc)
-    task.execute if declarative
-    return task
+
+    @logger.debug(@ant_version)
   end
   
   def method_missing(sym, *args)
     begin
       @logger.debug("AntProject.method_missing sym[#{sym.to_s}]")
-      return create_task(sym.to_s, args[0], block_given? ? Proc.new : nil)
+      task = AntTask.new(sym.to_s, self, args[0], block_given? ? Proc.new : nil)
+      task.execute if declarative
+      return task
     rescue
       @logger.error("Error instantiating task[#{sym.to_s}]" + $!)
       throw $!
@@ -206,11 +198,5 @@ class AntProject
   def to_s
     return self.class.name + "[#{@project.getName()}]"
   end 
-  
-  #This method invokes create_task. It is here to prevent conflicts wth the JRuby library
-  #over the 'java' symbol.
-#  def java(attributes=Hash.new)
-#    create_task('java', attributes, (block_given? ? Proc.new : nil))
-#  end  
   
 end

@@ -1,5 +1,4 @@
 module ApacheAnt
-  require 'java'
   include_class "org.apache.tools.ant.DefaultLogger"
   include_class "org.apache.tools.ant.Main"
   include_class "org.apache.tools.ant.Project"
@@ -9,6 +8,5 @@ module ApacheAnt
 end
 
 module JavaLang
-  require 'java'
   include_class "java.lang.System"
 end
