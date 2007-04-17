@@ -10,7 +10,7 @@ require 'rake/gempackagetask'
 
 def create_spec(spec, platform)
   spec.name          = 'Antwrap'
-  spec.version       = '0.5.1'
+  spec.version       = '0.5.2'
   spec.author        = 'Caleb Powell'
   spec.email         = 'caleb.powell@gmail.com'
   spec.homepage      = 'http://rubyforge.org/projects/antwrap/'
@@ -18,7 +18,7 @@ def create_spec(spec, platform)
   spec.summary       = "A Ruby module that wraps the Apache Ant build tool, enabling Ant Tasks to be invoked from a Ruby/JRuby scripts."
   candidates      = Dir.glob("{lib,test,docs}/**/*")
   spec.files         = candidates.delete_if do |item|
-    item.include?(".svn")
+    item.include?(".svn") || item.include?("apache-ant-1.7.0")
   end
   spec.require_path  = 'lib'
   spec.autorequire   = 'antwrap'
