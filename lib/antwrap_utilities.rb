@@ -18,7 +18,6 @@ module AntwrapClassLoader
   end
   
   def load_ant_libs(ant_home)
-    puts "loading ant jar files. Ant_Home: #{ant_home}"
     jars = match(ant_home + '/lib') {|p| ext = p[-4...p.size]; ext && ext.downcase == '.jar'} 
     if(RUBY_PLATFORM == 'java')
       jars.each {|jar| require jar }

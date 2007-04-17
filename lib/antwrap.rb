@@ -8,6 +8,7 @@ require 'antwrap_utilities'
 
 class AntTask
   @@task_stack = Array.new
+  attr_accessor(:unknown_element, :project, :taskname, :logger, :executed)
   
   public  
   def initialize(taskname, antProject, attributes, proc)
@@ -42,7 +43,7 @@ class AntTask
     return self.class.name + "[#{@taskname}]"
   end 
   
-  attr_accessor(:unknown_element, :project, :taskname, :logger, :executed)
+ 
   def create_unknown_element(project, taskname)
     
     element = ApacheAnt::UnknownElement.new(taskname)
@@ -50,7 +51,7 @@ class AntTask
     element.setOwningTarget(ApacheAnt::Target.new())
     element.setTaskName(taskname)
     
-    #dnr. This initializes the Task's Wrapper object and prevents NullPointerExeption upon execution of the task
+    #DNR. This initializes the Task's Wrapper object and prevents NullPointerExeption upon execution of the task
     element.getRuntimeConfigurableWrapper()
     
     if(@project_wrapper.ant_version >= 1.6)
@@ -99,7 +100,6 @@ class AntTask
   
   #Add <em>child</em> as a child of this task. 
   def add(child)
-    #    @logger.debug("adding child[#{child.taskname()}] to [#{@taskname}]")
     @unknown_element.addChild(child.unknown_element())
     @unknown_element.getRuntimeConfigurableWrapper().addChild(child.unknown_element().getRuntimeConfigurableWrapper())
   end
@@ -118,6 +118,21 @@ class AntProject
   
   private
   @@classes_loaded = false
+  
+  def init_project(options)
+    @project= ApacheAnt::Project.new
+    @project.setName(options[:name] || '')
+    @project.setDefault('')
+    @project.setBasedir(options[:basedir] || '.')
+    @project.init
+    self.declarative= options[:declarative] || true      
+    default_logger = ApacheAnt::DefaultLogger.new
+    default_logger.setMessageOutputLevel(2)
+    default_logger.setOutputPrintStream(options[:outputstr] || JavaLang::System.out)
+    default_logger.setErrorPrintStream(options[:errorstr] || JavaLang::System.err)
+    default_logger.setEmacsMode(false)
+    @project.addBuildListener(default_logger)
+  end
   
   public
   attr :project, false
@@ -149,28 +164,21 @@ class AntProject
   # :loglevel=><em>The level to set the logger to</em>
   #   -Defaults to Logger::ERROR
   def initialize(options=Hash.new)
-    if(!@@classes_loaded && options[:ant_home])
-      AntwrapClassLoader.load_ant_libs(options[:ant_home])
-      @@classes_loaded = true
-    end
-    
-    @project= ApacheAnt::Project.new
-    @project.setName(options[:name] || '')
-    @project.setDefault('')
-    @project.setBasedir(options[:basedir] || '.')
-    @project.init
-    self.declarative= options[:declarative] || true      
-    default_logger = ApacheAnt::DefaultLogger.new
-    default_logger.setMessageOutputLevel(2)
-    default_logger.setOutputPrintStream(options[:outputstr] || JavaLang::System.out)
-    default_logger.setErrorPrintStream(options[:errorstr] || JavaLang::System.err)
-    default_logger.setEmacsMode(false)
-    @project.addBuildListener(default_logger)
-    @ant_version = ApacheAnt::Main.getAntVersion()[/\d\.\d\.\d/].to_f
+
     @logger = options[:logger] || Logger.new(STDOUT)
     @logger.level = options[:loglevel] || Logger::ERROR
 
-    @logger.debug(@ant_version)
+    if(!@@classes_loaded && options[:ant_home])
+      @logger.debug("loading ant jar files. Ant_Home: #{options[:ant_home]}")
+      AntwrapClassLoader.load_ant_libs(options[:ant_home])
+      @@classes_loaded = true
+    end
+
+    @logger.debug(ApacheAnt::Main.getAntVersion())
+    @ant_version = ApacheAnt::Main.getAntVersion()[/\d\.\d\.\d/].to_f
+
+    init_project(options)
+
   end
   
   def method_missing(sym, *args)
@@ -185,12 +193,12 @@ class AntProject
     end
   end
   
-  #The Ant Project's name. Default is '.'
+  #The Ant Project's name. Default is ''
   def name()
     return @project.getName
   end
   
-  #The Ant Project's basedir. Default is '.'.
+  #The Ant Project's basedir. Default is '.'
   def basedir()
     return @project.getBaseDir().getAbsolutePath();
   end

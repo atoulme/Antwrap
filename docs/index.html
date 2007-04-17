@@ -4,9 +4,11 @@
 <code lang="ruby">
     #All options are optional. The defaults are as follows;
     #{:name=&gt'', :basedir=&gt'.', :declarative=&gt true, :logger=&gt Logger.new(STDOUT), :loglevel=&gt Logger::DEBUG}
-    #so you can call AntProject.new() if you like.
+    #so you can call AntProject.new() if you like. If you specify an :ant_home property, Antwrap will load the jar files
+    for you dynamically. If not, it is assumed that they are in your Classpath.
     
-    @ant = AntProject.new({:name=&gt"FooProject", 
+    @ant = AntProject.new({:ant_home=&gt"/Users/fooman/tools/apache-ant-1.7.0",
+    					   :name=&gt"FooProject", 
                            :basedir=&gt current_dir, 
                            :declarative=&gt true, 
                            :logger=&gt Logger.new(STDOUT), 
