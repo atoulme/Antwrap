@@ -10,3 +10,7 @@ end
 module JavaLang
   System = Rjb::import("java.lang.System")
 end
+
+module XmlSax
+  AttributeListImpl = Rjb::import("org.xml.sax.helpers.AttributeListImpl")
+end

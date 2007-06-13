@@ -10,3 +10,7 @@ end
 module JavaLang
   include_class "java.lang.System"
 end
+
+module XmlSax
+  include_class "org.xml.sax.helpers.AttributeListImpl"
+end

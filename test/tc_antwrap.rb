@@ -9,42 +9,20 @@ require 'fileutils'
 $LOAD_PATH.push(ENV['PWD'] + '/lib')
 require 'antwrap'
 require 'logger'
-#class TestStream < java.io.PrintStream
-#    attr_reader :last_line
-#    
-#    def initialise(out)
-#      self.super(out)
-#    end
-#    
-#    def println(s)
-#      puts "s"
-#      @last_line = s
-#      self.super(s)
-#    end
-#    
-#    def print(s)
-#      puts "s"
-#      @last_line = s
-#      self.super(s)
-#    end
-#end
+
 class TestAntwrap < Test::Unit::TestCase
   
   def setup
     @current_dir = ENV['PWD']
     @output_dir = @current_dir + '/test/output'
     @resource_dir = @current_dir + '/test/test-resources'
+    
     @ant_home = @resource_dir + "/apache-ant-1.7.0"
 #    @ant_home = "/Users/caleb/tools/apache-ant-1.6.5"
 #    @ant_home = "/Users/caleb/tools/apache-ant-1.5.4"
     @ant_proj_props = {:name=>"testProject", :basedir=>@current_dir, :declarative=>true, 
                         :logger=>Logger.new(STDOUT), :loglevel=>Logger::DEBUG, :ant_home => @ant_home}
-    @ant = AntProject.new(:ant_home => @ant_home)
-#    assert(@ant_proj_props[:name] == @ant.name())
-#    
-#    assert(@ant_proj_props[:basedir] == @ant.basedir())
-#    assert(@ant_proj_props[:declarative] == @ant.declarative())
-#    
+    @ant = AntProject.new(@ant_proj_props)
     
     if File.exists?(@output_dir)
       FileUtils.remove_dir(@output_dir)
@@ -64,9 +42,7 @@ class TestAntwrap < Test::Unit::TestCase
       
   def test_unzip_task
     assert_absent @output_dir + '/parent/FooBarParent.class'
-    task = @ant.unzip(:src => @resource_dir + '/parent.jar',
-    :dest => @output_dir)
-    
+    @ant.unzip(:src => @resource_dir + '/parent.jar', :dest => @output_dir)
     assert_exists @output_dir + '/parent/FooBarParent.class'
   end
   
@@ -106,18 +82,18 @@ class TestAntwrap < Test::Unit::TestCase
     assert_absent @output_dir + '/classes/foo/bar/FooBar.class'
     @ant.property(:name => 'pattern', :value => '**/*.jar') 
     @ant.property(:name => 'resource_dir', :value => @resource_dir)
-      @ant.path(:id => 'common.class.path'){
-        fileset(:dir => '${resource_dir}'){
-          include(:name => '${pattern}')
-        }
+    @ant.path(:id => 'common.class.path'){
+      fileset(:dir => '${resource_dir}'){
+        include(:name => '${pattern}')
       }
+    }
     
     @ant.javac(:srcdir => @resource_dir + '/src', 
     :destdir => @output_dir + '/classes',
     :debug => 'on',
-    :verbose => 'yes',
+    :verbose => true,
     :fork => 'no',
-    :failonerror => 'yes',
+    :failonerror => 'blahblahblah',
     :includes => 'foo/bar/**',
     :excludes => 'foo/bar/baz/**',
     :classpathref => 'common.class.path')
@@ -140,7 +116,7 @@ class TestAntwrap < Test::Unit::TestCase
   def test_java_task
   
     return if @ant.ant_version < 1.7
-     
+    puts "executing java task" 
     FileUtils.mkdir(@output_dir + '/classes', :mode => 0775)
     @ant.javac(:srcdir => @resource_dir + '/src',  
     :destdir => @output_dir + '/classes',
@@ -167,15 +143,10 @@ class TestAntwrap < Test::Unit::TestCase
   end
   
   def test_echo_task
-#    stream = TestStream.new(java.lang.System.out)
-#    
-#    @ant = AntProject.new({:name=>"testProject", :basedir=>@current_dir, :declarative=>true, 
-#                        :logger=>Logger.new(STDOUT), :loglevel=>Logger::DEBUG, :outputstr => stream})                            
     msg = "Antwrap is running an Echo task"                    
     @ant.echo(:message => msg, :level => 'info')
-#    assert(stream.last_line, stream.last_line == msg)
-    
-    @ant.echo(:pcdata => "<foo&bar>")
+    @ant.echo(:message => 100000, :level => 'info')
+    @ant.echo(:pcdata => 1000)
   end
   
   def test_mkdir_task
@@ -255,6 +226,17 @@ class TestAntwrap < Test::Unit::TestCase
   def test_tstamp
     @ant.tstamp
   end
+  
+#  def test_open_pja
+#    @ant.taskdef(:name=>"mappingtool", :classname=>"org.apache.openjpa.jdbc.ant.MappingToolTask") 
+#    
+#    @ant.mappingtool(:action => "buildSchema"){
+#      fileset(:dir => "."){
+#        include(:name => "**/*.jdo")
+#      }
+#    }
+#  end
+  
   private 
   def assert_exists(file_path)
     assert(File.exists?(file_path), "Does not exist[#{file_path}]")

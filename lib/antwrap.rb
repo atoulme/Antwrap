@@ -5,10 +5,11 @@
 # Licensed under the LGPL, see the file COPYING in the distribution
 #
 require 'antwrap_utilities'
+require 'dsl'
 
 class AntTask
   @@task_stack = Array.new
-  attr_accessor(:unknown_element, :project, :taskname, :logger, :executed)
+  attr_accessor :unknown_element, :project, :taskname, :logger, :executed
   
   public  
   def initialize(taskname, antProject, attributes, proc)
@@ -81,23 +82,33 @@ class AntTask
     return if attributes == nil
     
     wrapper = ApacheAnt::RuntimeConfigurable.new(@unknown_element, @unknown_element.getTaskName());
-    outer_func = lambda{ |key, val, tfunc|  key == 'pcdata' ? wrapper.addText(val) : tfunc.call(key, val) }
     
     if(@project_wrapper.ant_version >= 1.6)
       attributes.each do |key, val| 
-        outer_func.call(key.to_s, val, lambda{|k,v| wrapper.setAttribute(k, val)}) 
+        apply_to_wrapper(wrapper, key.to_s, val.to_s){ |k,v| wrapper.setAttribute(k, v)}
       end
     else  
       @unknown_element.setRuntimeConfigurableWrapper(wrapper)
-      attribute_list = org.xml.sax.helpers.AttributeListImpl.new()
+      attribute_list = XmlSax::AttributeListImpl.new()
       attributes.each do |key, val| 
-        outer_func.call(key.to_s, val, lambda{|k,v| attribute_list.addAttribute(k, 'CDATA', v)})
+        apply_to_wrapper(wrapper, key.to_s, val.to_s){ |k,v| attribute_list.addAttribute(k, 'CDATA', v)}
       end
       wrapper.setAttributes(attribute_list)
     end
-    
   end
   
+  def apply_to_wrapper(wrapper, key, value)
+    begin
+      if(key == 'pcdata')
+        wrapper.addText(value)
+      else
+        yield key, value
+      end
+    rescue StandardError
+      raise ArgumentError, "Error attempting to set '#{wrapper.getElementTag()}' task with attribute ':#{key} => #{value}'"
+    end
+  end
+    
   #Add <em>child</em> as a child of this task. 
   def add(child)
     @unknown_element.addChild(child.unknown_element())
@@ -113,7 +124,7 @@ class AntTask
   
 end
 
-class AntProject
+class AntProject 
   require 'logger'
   
   private
@@ -164,7 +175,6 @@ class AntProject
   # :loglevel=><em>The level to set the logger to</em>
   #   -Defaults to Logger::ERROR
   def initialize(options=Hash.new)
-
     @logger = options[:logger] || Logger.new(STDOUT)
     @logger.level = options[:loglevel] || Logger::ERROR
 
@@ -176,9 +186,8 @@ class AntProject
 
     @logger.debug(ApacheAnt::Main.getAntVersion())
     @ant_version = ApacheAnt::Main.getAntVersion()[/\d\.\d\.\d/].to_f
-
     init_project(options)
-
+    
   end
   
   def method_missing(sym, *args)
