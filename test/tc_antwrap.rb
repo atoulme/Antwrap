@@ -227,6 +227,13 @@ class TestAntwrap < Test::Unit::TestCase
     @ant.tstamp
   end
   
+  def test_array_argument
+    begin
+      @ant.echo(:message => ['This', 'should', 'fail', 'because', 'Arrays', 'are', 'not', 'supported'])
+      add_failure "Arrays not permitted"
+    rescue ArgumentError
+    end
+  end
 #  def test_open_pja
 #    @ant.taskdef(:name=>"mappingtool", :classname=>"org.apache.openjpa.jdbc.ant.MappingToolTask") 
 #    

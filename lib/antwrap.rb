@@ -35,6 +35,7 @@ class AntTask
         end
       }
       proc.instance_eval &proc
+      
       @@task_stack.pop 
     end
     
@@ -85,27 +86,30 @@ class AntTask
     
     if(@project_wrapper.ant_version >= 1.6)
       attributes.each do |key, val| 
-        apply_to_wrapper(wrapper, key.to_s, val.to_s){ |k,v| wrapper.setAttribute(k, v)}
+        apply_to_wrapper(wrapper, key.to_s, val){ |k,v| wrapper.setAttribute(k, v)}
       end
     else  
       @unknown_element.setRuntimeConfigurableWrapper(wrapper)
       attribute_list = XmlSax::AttributeListImpl.new()
       attributes.each do |key, val| 
-        apply_to_wrapper(wrapper, key.to_s, val.to_s){ |k,v| attribute_list.addAttribute(k, 'CDATA', v)}
+        apply_to_wrapper(wrapper, key.to_s, val){ |k,v| attribute_list.addAttribute(k, 'CDATA', v)}
       end
       wrapper.setAttributes(attribute_list)
     end
   end
   
   def apply_to_wrapper(wrapper, key, value)
+  
+    raise ArgumentError, "ArgumentError: You cannot use an Array as an argument. Use the :join method instead; i.e ['file1', 'file2'].join(File::PATH_SEPARATOR)." if value.is_a?(Array)
+        
     begin
       if(key == 'pcdata')
-        wrapper.addText(value)
+        wrapper.addText(value.to_s)
       else
-        yield key, value
+        yield key, value.to_s
       end
     rescue StandardError
-      raise ArgumentError, "Error attempting to set '#{wrapper.getElementTag()}' task with attribute ':#{key} => #{value}'"
+      raise ArgumentError, "ArgumentError: Unable to set :#{key} attribute with value => '#{value}'"
     end
   end
     
@@ -197,8 +201,8 @@ class AntProject
       task.execute if declarative
       return task
     rescue
-      @logger.error("Error instantiating task[#{sym.to_s}]" + $!)
-      throw $!
+      @logger.error("Error instantiating '#{sym.to_s}' task; " + $!)
+      raise
     end
   end
   
