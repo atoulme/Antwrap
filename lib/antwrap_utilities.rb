@@ -20,11 +20,11 @@ module AntwrapClassLoader
   end
   
   def load_ant_libs(ant_home)
-    jars = match(ant_home + '/lib') {|p| ext = p[-4...p.size]; ext && ext.downcase == '.jar'} 
+    jars = match(ant_home + File::SEPARATOR + 'lib') {|p| ext = p[-4...p.size]; ext && ext.downcase == '.jar'} 
     if(RUBY_PLATFORM == 'java')
       jars.each {|jar| require jar }
     else
-      Rjb::load(jars.join(":"), [])
+      Rjb::load(jars.join(File::PATH_SEPARATOR), [])
     end
   end
   module_function :match, :load_ant_libs

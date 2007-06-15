@@ -7,7 +7,6 @@
 require 'antwrap_utilities'
 
 class AntTask
-  @@task_stack = Array.new
   attr_accessor :unknown_element, :project, :taskname, :logger, :executed
   
   public  
@@ -22,29 +21,12 @@ class AntTask
     @logger.debug(to_s)
     
     add_attributes(attributes)
-    
-    if proc
-      @logger.debug("task_stack.push #{taskname} >> #{@@task_stack}") 
-      @@task_stack.push self
-      
-      singleton_class = class << proc; self; end
-      singleton_class.module_eval{
-        def method_missing(m, *a, &proc)
-          @@task_stack.last().send(m, *a, &proc)
-        end
-      }
-      proc.instance_eval &proc
-      
-      @@task_stack.pop 
-    end
-    
   end
   
   def to_s
     return self.class.name + "[#{@taskname}]"
   end 
   
- 
   def create_unknown_element(project, taskname)
     
     element = ApacheAnt::UnknownElement.new(taskname)
@@ -64,16 +46,6 @@ class AntTask
     return element
     
   end
-  
-  def method_missing(sym, *args)
-    begin
-      @logger.debug("AntTask.method_missing sym[#{sym.to_s}]")
-      task = AntTask.new(sym.to_s, @project_wrapper, args[0], block_given? ? Proc.new : nil)
-      self.add(task)
-    rescue StandardError
-      @logger.error("AntTask.method_missing error:" + $!)
-    end
-  end  
   
   # Sets each attribute on the AntTask instance.
   # :attributes - is a Hash.
@@ -95,6 +67,7 @@ class AntTask
       end
       wrapper.setAttributes(attribute_list)
     end
+    
   end
   
   def apply_to_wrapper(wrapper, key, value)
@@ -137,7 +110,7 @@ class AntProject
     @project= ApacheAnt::Project.new
     @project.setName(options[:name] || '')
     @project.setDefault('')
-    @project.setBasedir(options[:basedir] || '.')
+    @project.setBasedir(options[:basedir] || FileUtils::pwd)
     @project.init
     self.declarative= options[:declarative] || true      
     default_logger = ApacheAnt::DefaultLogger.new
@@ -178,6 +151,7 @@ class AntProject
   # :loglevel=><em>The level to set the logger to</em>
   #   -Defaults to Logger::ERROR
   def initialize(options=Hash.new)
+   
     @logger = options[:logger] || Logger.new(STDOUT)
     @logger.level = options[:loglevel] || Logger::ERROR
 
@@ -193,16 +167,34 @@ class AntProject
     
   end
   
+  @@task_stack = Array.new
   def method_missing(sym, *args)
     begin
+      
       @logger.debug("AntProject.method_missing sym[#{sym.to_s}]")
       task = AntTask.new(sym.to_s, self, args[0], block_given? ? Proc.new : nil)
-      task.execute if declarative
-      return task
+      
+      parent_task = @@task_stack.last
+      @@task_stack << task
+      
+      yield self if block_given?
+  
+      @logger.debug("Adding child task #{task} ==> #{parent_task}") if parent_task
+      parent_task.add(task) if parent_task
+      
+      if @@task_stack.size == 1 && declarative
+          @logger.debug("Executing task #{task}")
+          task.execute 
+      elsif @@task_stack.size == 1 && !declarative
+          return task
+      end
     rescue
       @logger.error("Error instantiating '#{sym.to_s}' task; " + $!)
       raise
+    ensure
+      @@task_stack.pop
     end
+    
   end
   
   #The Ant Project's name. Default is ''

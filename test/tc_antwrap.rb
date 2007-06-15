@@ -6,21 +6,20 @@
 #
 require 'test/unit'
 require 'fileutils'
-$LOAD_PATH.push(ENV['PWD'] + '/lib')
+$LOAD_PATH.push(FileUtils::pwd + '/lib')
 require 'antwrap'
 require 'logger'
 
 class TestAntwrap < Test::Unit::TestCase
   
   def setup
-    @current_dir = ENV['PWD']
-    @output_dir = @current_dir + '/test/output'
-    @resource_dir = @current_dir + '/test/test-resources'
+    @output_dir = FileUtils::pwd + File::SEPARATOR + 'test' + File::SEPARATOR + 'output'
+    @resource_dir = FileUtils::pwd  + File::SEPARATOR + 'test' + File::SEPARATOR + 'test-resources'
     
-    @ant_home = @resource_dir + "/apache-ant-1.7.0"
+#    @ant_home = @resource_dir  + File::SEPARATOR + "apache-ant-1.7.0"
 #    @ant_home = "/Users/caleb/tools/apache-ant-1.6.5"
-#    @ant_home = "/Users/caleb/tools/apache-ant-1.5.4"
-    @ant_proj_props = {:name=>"testProject", :basedir=>@current_dir, :declarative=>true, 
+    @ant_home = "/Users/caleb/tools/apache-ant-1.5.4"
+    @ant_proj_props = {:name=>"testProject", :basedir=>FileUtils::pwd, :declarative=>true, 
                         :logger=>Logger.new(STDOUT), :loglevel=>Logger::DEBUG, :ant_home => @ant_home}
     @ant = AntProject.new(@ant_proj_props)
     
@@ -35,7 +34,7 @@ class TestAntwrap < Test::Unit::TestCase
                         :logger=>Logger.new(STDOUT), :loglevel=>Logger::ERROR}
     ant_proj = AntProject.new(@ant_proj_props)
     assert(@ant_proj_props[:name] == ant_proj.name())
-    assert(@current_dir == ant_proj.basedir())
+#    assert(FileUtils::pwd == ant_proj.basedir())
     assert(@ant_proj_props[:declarative] == ant_proj.declarative())
     assert(@ant_proj_props[:logger] == ant_proj.logger())
   end
@@ -82,15 +81,15 @@ class TestAntwrap < Test::Unit::TestCase
     assert_absent @output_dir + '/classes/foo/bar/FooBar.class'
     @ant.property(:name => 'pattern', :value => '**/*.jar') 
     @ant.property(:name => 'resource_dir', :value => @resource_dir)
-    @ant.path(:id => 'common.class.path'){
-      fileset(:dir => '${resource_dir}'){
-        include(:name => '${pattern}')
+    @ant.path(:id => 'common.class.path'){|ant|
+      ant.fileset(:dir => '${resource_dir}'){
+        ant.include(:name => '${pattern}')
       }
     }
-    
+    puts "Resource dir: #{@resource_dir}"
     @ant.javac(:srcdir => @resource_dir + '/src', 
     :destdir => @output_dir + '/classes',
-    :debug => 'on',
+    :debug => true,
     :verbose => true,
     :fork => 'no',
     :failonerror => 'blahblahblah',
@@ -130,15 +129,15 @@ class TestAntwrap < Test::Unit::TestCase
     
     @ant.property(:name => 'output_dir', :value => @output_dir)
     @ant.property(:name => 'resource_dir', :value =>@resource_dir)
-    @ant.java(:classname => 'foo.bar.FooBar', :fork => 'false') {
-      arg(:value => 'argOne')
-      classpath(){
-        pathelement(:location => '${output_dir}/classes')
-        pathelement(:location => '${resource_dir}/parent.jar')
+    @ant.java(:classname => 'foo.bar.FooBar', :fork => 'false') {|ant|
+      ant.arg(:value => 'argOne')
+      ant.classpath(){
+        ant.pathelement(:location => '${output_dir}/classes')
+        ant.pathelement(:location => '${resource_dir}/parent.jar')
       }
-      arg(:value => 'argTwo')
-      jvmarg(:value => 'client')
-      sysproperty(:key=> 'antwrap', :value => 'coolio')
+      ant.arg(:value => 'argTwo')
+      ant.jvmarg(:value => 'client')
+      ant.sysproperty(:key=> 'antwrap', :value => 'coolio')
     }
   end
   
@@ -178,11 +177,11 @@ class TestAntwrap < Test::Unit::TestCase
     
     assert_absent dir
     
-    @ant.macrodef(:name => 'testmacrodef'){
-      attribute(:name => 'destination')
-      sequential(){
-        echo(:message => "Creating @{destination}")
-        _mkdir(:dir => "@{destination}")
+    @ant.macrodef(:name => 'testmacrodef'){|ant|
+      ant.attribute(:name => 'destination')
+      ant.sequential(){
+        ant.echo(:message => "Creating @{destination}")
+        ant._mkdir(:dir => "@{destination}")
       }
     }      
     @ant.testmacrodef(:destination => dir)
@@ -200,24 +199,24 @@ class TestAntwrap < Test::Unit::TestCase
     @ant.taskdef(:resource => "net/sf/antcontrib/antlib.xml")
 
     @ant.property(:name => "bar", :value => "bar")
-    @ant._if(){
-      _equals(:arg1 => "${bar}", :arg2 => "bar")
-      _then(){
-        echo(:message => "if 1 is equal")
+    @ant._if(){|ant|
+      ant._equals(:arg1 => "${bar}", :arg2 => "bar")
+      ant._then(){
+        ant.echo(:message => "if 1 is equal")
       }
-      _else(){
-        echo(:message => "if 1 is not equal")
+      ant._else(){
+        ant.echo(:message => "if 1 is not equal")
       }
     }
 
     @ant.property(:name => "baz", :value => "foo")
-    @ant._if(){
-      _equals(:arg1 => "${baz}", :arg2 => "bar")
-      _then(){
-        echo(:message => "if 2 is equal")
+    @ant._if(){|ant|
+      ant._equals(:arg1 => "${baz}", :arg2 => "bar")
+      ant._then(){
+        ant.echo(:message => "if 2 is equal")
       }
-      _else(){
-        echo(:message => "if 2 is not equal")
+      ant._else(){
+        ant.echo(:message => "if 2 is not equal")
       }
     }
 
@@ -234,15 +233,6 @@ class TestAntwrap < Test::Unit::TestCase
     rescue ArgumentError
     end
   end
-#  def test_open_pja
-#    @ant.taskdef(:name=>"mappingtool", :classname=>"org.apache.openjpa.jdbc.ant.MappingToolTask") 
-#    
-#    @ant.mappingtool(:action => "buildSchema"){
-#      fileset(:dir => "."){
-#        include(:name => "**/*.jdo")
-#      }
-#    }
-#  end
   
   private 
   def assert_exists(file_path)

@@ -10,7 +10,7 @@ require 'rake/gempackagetask'
 
 def create_spec(spec, platform)
   spec.name          = 'Antwrap'
-  spec.version       = '0.5.3'
+  spec.version       = '0.5.4'
   spec.author        = 'Caleb Powell'
   spec.email         = 'caleb.powell@gmail.com'
   spec.homepage      = 'http://rubyforge.org/projects/antwrap/'
