@@ -5,7 +5,6 @@
 # Licensed under the LGPL, see the file COPYING in the distribution
 #
 require 'antwrap_utilities'
-require 'dsl'
 
 class AntTask
   @@task_stack = Array.new
