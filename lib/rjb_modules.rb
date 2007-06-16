@@ -1,3 +1,10 @@
+# rjb_modules.rb
+#
+# Copyright Caleb Powell 2007
+#
+# Licensed under the LGPL, see the file COPYING in the distribution
+#
+
 module ApacheAnt
   DefaultLogger =  Rjb::import("org.apache.tools.ant.DefaultLogger")
   Main = Rjb::import("org.apache.tools.ant.Main")

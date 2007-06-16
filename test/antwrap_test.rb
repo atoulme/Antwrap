@@ -4,21 +4,22 @@
 #
 # Licensed under the LGPL, see the file COPYING in the distribution
 #
+
 require 'test/unit'
 require 'fileutils'
 $LOAD_PATH.push(FileUtils::pwd + '/lib')
 require 'antwrap'
 require 'logger'
 
-class TestAntwrap < Test::Unit::TestCase
+class AntwrapTest < Test::Unit::TestCase
   
   def setup
     @output_dir = FileUtils::pwd + File::SEPARATOR + 'test' + File::SEPARATOR + 'output'
     @resource_dir = FileUtils::pwd  + File::SEPARATOR + 'test' + File::SEPARATOR + 'test-resources'
     
-#    @ant_home = @resource_dir  + File::SEPARATOR + "apache-ant-1.7.0"
+    @ant_home = @resource_dir  + File::SEPARATOR + "apache-ant-1.7.0"
 #    @ant_home = "/Users/caleb/tools/apache-ant-1.6.5"
-    @ant_home = "/Users/caleb/tools/apache-ant-1.5.4"
+#    @ant_home = "/Users/caleb/tools/apache-ant-1.5.4"
     @ant_proj_props = {:name=>"testProject", :basedir=>FileUtils::pwd, :declarative=>true, 
                         :logger=>Logger.new(STDOUT), :loglevel=>Logger::DEBUG, :ant_home => @ant_home}
     @ant = AntProject.new(@ant_proj_props)

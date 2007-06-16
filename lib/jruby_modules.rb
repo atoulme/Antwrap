@@ -1,3 +1,10 @@
+# jruby_modules.rb
+#
+# Copyright Caleb Powell 2007
+#
+# Licensed under the LGPL, see the file COPYING in the distribution
+
+
 module ApacheAnt
   include_class "org.apache.tools.ant.DefaultLogger"
   include_class "org.apache.tools.ant.Main"
