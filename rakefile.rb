@@ -22,7 +22,7 @@ def create_spec(spec, platform)
   end
   spec.require_path  = 'lib'
   spec.autorequire   = 'antwrap'
-  spec.test_file     = 'test/tc_antwrap.rb'
+  spec.test_file     = 'test/antwrap_test.rb'
   spec.has_rdoc      = true
   spec.extra_rdoc_files  = ['README', 'COPYING']
 end        

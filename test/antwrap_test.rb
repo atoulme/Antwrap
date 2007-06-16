@@ -82,9 +82,9 @@ class AntwrapTest < Test::Unit::TestCase
     assert_absent @output_dir + '/classes/foo/bar/FooBar.class'
     @ant.property(:name => 'pattern', :value => '**/*.jar') 
     @ant.property(:name => 'resource_dir', :value => @resource_dir)
-    @ant.path(:id => 'common.class.path'){|ant|
-      ant.fileset(:dir => '${resource_dir}'){
-        ant.include(:name => '${pattern}')
+    @ant.path(:id => 'common.class.path'){
+      @ant.fileset(:dir => '${resource_dir}'){
+        @ant.include(:name => '${pattern}')
       }
     }
     puts "Resource dir: #{@resource_dir}"

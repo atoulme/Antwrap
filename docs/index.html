@@ -1,110 +1,187 @@
-<html><head><title>Antwrap - Invoke Ant tasks from your Ruby/JRuby scripts!</title></head><body><ul>
-<h1>Antwrap</h1>
-<h3>Invoke Ant tasks from your Ruby/JRuby scripts!</h3><br/>
-<pre><li>Sample code of the Antwrap library looks like this;
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Antwrap</title> 
 
-<code lang="ruby">
-    #All options are optional. The defaults are as follows;
-    #{:name=&gt'', :basedir=&gt'.', :declarative=&gt true, :logger=&gt Logger.new(STDOUT), :loglevel=&gt Logger::DEBUG}
-    #so you can call AntProject.new() if you like. If you specify an :ant_home property, Antwrap will load the jar files
-    for you dynamically. If not, it is assumed that they are in your Classpath.
+
+
     
-    @ant = AntProject.new({:ant_home=&gt"/Users/fooman/tools/apache-ant-1.7.0",
-    					   :name=&gt"FooProject", 
-                           :basedir=&gt current_dir, 
-                           :declarative=&gt true, 
-                           :logger=&gt Logger.new(STDOUT), 
-                           :loglevel=&gt Logger::DEBUG})
+    
+      <link rel="shortcut icon" href="https://docs.google.com/favicon.ico">
+      <meta name="robots" content="index,nofollow">
+      <link rel="stylesheet" type="text/css" href="index_files/Brander.css">
+    
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+    <meta name="description" content="Web word processing and spreadsheets">
+    
+      
+<style>
+BODY, P, DIV, H1, H2, H3, H4, H5, H6, ADDRESS, OL, UL, TITLE, TD, OPTION, SELECT {
+ font-family: Verdana;
+ 
+}
 
-    @ant.path(:id =&gt; "other.class.path"){
-        pathelement(:location =&gt; "classes")
-        pathelement(:location =&gt; "config")
-    }
+BODY, P, DIV, ADDRESS, OL, UL, LI, TITLE, TD, OPTION, SELECT {  
+  font-size: 10.0pt;
+  margin-top:0pt;  
+  margin-bottom:0pt;  
+} 
+
+BODY, P {
+  margin-left:0pt; 
+  margin-right:0pt;
+}
+
+BODY {
+  line-height: ;
+  background: white;
+  margin: 6px;
+  padding: 0px;
+}
+
+h6 { font-size: 10pt }
+h5 { font-size: 11pt }
+h4 { font-size: 12pt }
+h3 { font-size: 13pt }
+h2 { font-size: 14pt }
+h1 { font-size: 16pt }
+
+blockquote {padding: 10px; border: 1px #DDDDDD dashed }
+
+a img {border: 0}
+
+</style>
 
 
-    @ant.path(:id =&gt; "common.class.path"){
-        fileset(:dir =&gt; "${common.dir}/lib"){
-            include(:name =&gt; "**/*.jar")
+    
+		
+
+		
+  <script>
+      var RedirectMessage = "";
+      
+      function ShowMessageIfAny() {
+        if (RedirectMessage.length > 0) {
+          alert(RedirectMessage);
         }
-        pathelement(:location =&gt; "${common.classes}")
-    }
 
-    @ant.javac(:srcdir =&gt; "test", :destdir =&gt; "classes"){
-        classpath(:refid =&gt; "common.class.path")
-        classpath(:refid =&gt; "foo.class.path")
-    }
-</code>
-</li>
-</pre>
-
-<pre><li>Alternatively, you can declare your Ant project to run in non-declarative mode, so that it only executes tasks
-upon the invocation of the execute() method (this is a more Object Oriented approach, and may be useful in some
-circumstances):
-
-<code lang="ruby">
-    @ant = AntProject.new({:name=&gt"FooProject", :declarative=&gt false})
-
-    javac_task = @ant.javac(:srcdir =&gt; "test", :destdir =&gt; "classes"){
-        classpath(:refid =&gt; "common.class.path")
-        classpath(:refid =&gt; "foo.class.path")
-    }
-
-    javac_task.execute
-</code>
-</li>
-</pre>
-
-<pre><li>There are some reserved words that we have to work around. For example, Ant-Contrib tasks such as 'if' and 'else'
-conflict with the Ruby reserved words. Under most circumstances, you won't need to use these tasks (indeed, the 
-awkwardness of conditional operations in Ant scripts is likely one of the reasons why you want to move to a build system 
-such as Rake). Nevertheless, there are that occasions demands it. Reserved words like this can be worked around by simply prepending an 
-underscore character ('_') to the task:
-
-<code lang="ruby">
-    #This is an example of the Ant-Contrib tasks.
-    #note: I added an underscore to 'equals' even though it isn't a reserved word. 
-    #This makes the code block more symmetrical (it's not required though). It also 
-    #illustrates that you can apply an underscore to any task and it will be stripped by Antwrap. 
-    @ant._if(){
-      _equals(:arg1 => "${bar}", :arg2 => "bar")
-      _then(){
-        echo(:message => "if 1 is equal")
+        
       }
-      _else(){
-        echo(:message => "if 1 is not equal")
+      
+      function HideFileMenu() {
+        if (typeof(window.parent) != "undefined" && 
+            window.parent != null && 
+            typeof(window.parent.HideMenus) != "undefined") {
+      	  window.parent.HideMenus(true);
+      	}
       }
-    }
+  </script></head><body topmargin="0" rightmargin="0" leftmargin="0" bottommargin="0" style="margin: 0px; padding: 0px;" onclick="HideFileMenu();" onload="ShowMessageIfAny();">
+    
+
+
+
+  
+
+
+<div style="padding: 8px; background-color: white;">
+    
+    <h3>
+  <b> Antwrap Introduction</b>
+</h3>
+<br>
+Antwrap is a Ruby library that can be used to invoke Ant tasks. It is being used
+in the <a href="http://buildr.rubyforge.org/" title="Buildr">Buildr</a> project
+to execute Ant tasks in a Java project.<br>
+If you are tired of fighting with Ant or Maven XML files in your Java project,
+take some time to check out Buildr!<br>
+Antwrap runs on both the native Ruby and the JRuby interpreters. Antwrap is
+compatible with Ant versions 1.5.4, 1.6.5 and 1.7.0.<br>
+<h3>
+  <b>Installing Antwrap</b>
+</h3>
+Installing Antwrap is done via the RubyGem gem command. In your OS shell type;<br>
+<br>
+<span style="background-color: rgb(204, 204, 204);">$ gem install antwrap </span><br>
+<br>
+You will be prompted with the following options:<br>
+<br>
+<span style="background-color: rgb(204, 204, 204);">$Select which gem to install for your
+platform (powerpc-darwin8.0) </span><br style="background-color: rgb(204, 204, 204);">
+<span style="background-color: rgb(204, 204, 204);">&nbsp;&nbsp;&nbsp; 1. Antwrap 0.5.4
+(java) </span><br style="background-color: rgb(204, 204, 204);">
+<span style="background-color: rgb(204, 204, 204);">&nbsp;&nbsp;&nbsp; 2. Antwrap 0.5.4
+(ruby) </span><br style="background-color: rgb(204, 204, 204);">
+<span style="background-color: rgb(204, 204, 204);">&nbsp;&nbsp;&nbsp; 3. Antwrap 0.5.3
+(java) </span><br style="background-color: rgb(204, 204, 204);">
+<span style="background-color: rgb(204, 204, 204);">&nbsp;&nbsp;&nbsp; 4. Antwrap 0.5.3
+(ruby) </span><br style="background-color: rgb(204, 204, 204);">
+<span style="background-color: rgb(204, 204, 204);">&nbsp;&nbsp;&nbsp; 5. Antwrap 0.5.2
+(ruby) </span><br style="background-color: rgb(204, 204, 204);">
+<span style="background-color: rgb(204, 204, 204);">&nbsp;&nbsp;&nbsp; 6. Antwrap 0.5.2
+(java) ....</span><br>
+<br>
+If you are using the native Ruby interpreter or running the Buildr project, then
+you want to select the <i>ruby</i> option (in this case, #2).<br>
+If you are using Antwrap on the JRuby interpreter, select the <i>java</i>
+option. The native Ruby version of Antwrap depends on another<br>
+gem called <a href="http://rjb.rubyforge.org/" title="RJB (RubyJavaBridge)">RJB
+(RubyJavaBridge)</a> and you will be prompted to install this as part of the
+Antwrap installation. Do so. The RJB gem makes it possible<br>
+for a Ruby script to instantiate Java classes via the Java Native Interface. If
+you chose the java gem, there are no further dependencies.<br>
+<h3>
+  Using Antwrap
+</h3>
+The Antwrap library is pretty simple to use, and should look very familiar to
+anyone who has written Ant tasks using XML.<br>
+You begin by instantiating an AntProject;<br>
+<br>
+<span style="background-color: rgb(204, 204, 204);"> @ant = AntProject.new()</span><br>
+<br>
+Alternatively, you can pass in a Hash of project options like so;<br>
+<code>
 </code>
-</li>
-</pre>
+<pre><span style="background-color: rgb(204, 204, 204);">options = {</span><code style="background-color: rgb(204, 204, 204);" lang="ruby">:ant_home=&gt;"/Users/fooman/tools/apache-ant-1.7.0", :name=&gt;"FooProject", :basedir=&gt; some_dir, <br>           :declarative=&gt; true, :logger=&gt; Logger.new(STDOUT), :loglevel=&gt; Logger::DEBUG</code><code style="background-color: rgb(204, 204, 204);" lang="ruby">}<br></code><span style="background-color: rgb(204, 204, 204);">@ant = AntProject.new(options)</span><br style="background-color: rgb(204, 204, 204);"><code lang="ruby"><br>The default options for an AntProject are as follows;<br></code><code lang="ruby"><br></code></pre>
+<ol>
+  <li>
+    <font face="Arial Black"><code lang="ruby">:name = The name of your AntProject. The default is <i>''</i>.</code></font><code></code></li><li><code></code>:basedir = The location of your project base directory. The default is <i>File.pwd</i>.</li><li>:declarative
+= If true, the AntProject will execute tasks be default. If false, it
+will return an instance of the task. Default value is <i>true</i>.</li><li>:logger = The Logger to use. The default id <i>Logger.new(STDOUT)</i></li><li>:loglevel = The log level. Default is <i>Logger::Erro</i>r</li><li>:ant_home
+= The location of you Ant installation. If provided, Antwrap will
+locate and load the Ant Jar files into the CLASSPATH. It will only do
+this once per Ruby process, so you if you create multiple AntProjects,
+it only loads the required files once.. If not provided, it is assumed
+that you have added the Ant jar files to your CLASSPATH manually.<code lang="ruby"> </code><br></li></ol><pre><code lang="ruby">Once you have an AntProject instance, you can begin invoking tasks. To do so, you simply invoke the desired task on the AntProject. You pass in <br>task attributes via a Hash, and you pass in child tasks inside a block. For example;<br><br><span style="background-color: rgb(204, 204, 204);">@ant.path(:id =&gt; "other.class.path"){ |ant|</span><br style="background-color: rgb(204, 204, 204);"><span style="background-color: rgb(204, 204, 204);">	ant.pathelement(:location =&gt; "classes")</span><br style="background-color: rgb(204, 204, 204);"><span style="background-color: rgb(204, 204, 204);">        ant.pathelement(:location =&gt; "config")</span><br style="background-color: rgb(204, 204, 204);"><span style="background-color: rgb(204, 204, 204);">}</span><br style="background-color: rgb(204, 204, 204);"><br style="background-color: rgb(204, 204, 204);"><span style="background-color: rgb(204, 204, 204);">@ant.path(:id =&gt; "common.class.path"){|ant|</span><br style="background-color: rgb(204, 204, 204);"><span style="background-color: rgb(204, 204, 204);">	ant.fileset(:dir =&gt; "${common.dir}/lib"){</span><br style="background-color: rgb(204, 204, 204);"><span style="background-color: rgb(204, 204, 204);">            ant.include(:name =&gt; "**/*.jar")</span><br style="background-color: rgb(204, 204, 204);"><span style="background-color: rgb(204, 204, 204);">        }</span><br style="background-color: rgb(204, 204, 204);"><span style="background-color: rgb(204, 204, 204);">        ant.pathelement(:location =&gt; "${common.classes}")</span><br style="background-color: rgb(204, 204, 204);"><span style="background-color: rgb(204, 204, 204);">}</span><br style="background-color: rgb(204, 204, 204);"><br style="background-color: rgb(204, 204, 204);"><span style="background-color: rgb(204, 204, 204);">@ant.javac(:srcdir =&gt; "test", :destdir =&gt; "classes"){</span></code><code style="background-color: rgb(204, 204, 204);" lang="ruby">|ant|</code><code style="background-color: rgb(204, 204, 204);" lang="ruby">        <br>	ant.classpath(:refid =&gt; "common.class.path")<br>        ant.classpath(:refid =&gt; "foo.class.path")<br>}<br></code><b><br></b></pre><h3><b>Declarative Mode</b></h3><pre>Alternatively, you can declare your Ant project to run in non-declarative mode, so that it only executes tasks<br>upon the invocation of the execute() method (this is a more Object Oriented approach, and may be useful in some<br>circumstances). For example;<br><br><code style="background-color: rgb(204, 204, 204);" lang="ruby">@ant = AntProject.new({:name=&gt;"FooProject", :declarative=&gt; false})<br><br>javac_task = @ant.javac(:srcdir =&gt; "test", :destdir =&gt; "classes"){</code><code style="background-color: rgb(204, 204, 204);" lang="ruby">|ant|</code><code style="background-color: rgb(204, 204, 204);" lang="ruby">        <br>	ant.classpath(:refid =&gt; "common.class.path")<br>        ant.classpath(:refid =&gt; "foo.class.path")<br>}<br><br>javac_task.execute</code><br><br></pre><h3>Reserved Words</h3><pre>If your Ant task conflicts with a Ruby reserved word, you can prepend an underscore. For example, Ant-Contrib <br>tasks such as 'if' and 'else' conflict with the Ruby reserved words;<br><br><code style="background-color: rgb(204, 204, 204);" lang="ruby">@ant._if(){|ant|<br>      ant._equals(:arg1 =&gt; "${bar}", :arg2 =&gt; "bar")<br>      ant._then(){<br>        ant.echo(:message =&gt; "if 1 is equal")<br>      }<br>      ant._else(){<br>        ant.echo(:message =&gt; "if 1 is not equal")<br>      }<br>}</code><br><br>Under most circumstances, you won't need to use these tasks because the Ruby language (OK... any language) can handle <br>conditionals better than Ant. Indeed, the  awkwardness of conditional operations in Ant scripts is likely one of the <br>reasons why you want to move to a build system such as Buildr.<br><br></pre><h3>Content Data</h3><pre>Content data is added via a 'pcdata' attribute:<br><br><code lang="ruby"><span style="background-color: rgb(204, 204, 204);">@ant.echo(:pcdata =&gt; "&lt;foo&amp;bar&gt;")</span><br><br></code><br>Comments or Questions? Contact me!  <br>Caleb Powell <br>caleb.powell@gmail.com <br></pre><br><br> 
+</div>
 
-<pre><li>Content data is added via a 'pcdata' attribute:
 
-<code lang="ruby">
-    @ant.echo(:pcdata =&gt; "&lt;foo&amp;bar&gt;")
-</code>
-</li>
+  <table id="navigation" border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tbody><tr><td bgcolor="#676767"><img src="index_files/blankdot.gif" height="1"></td></tr>
+    <tr><td align="center">
+      <table style="direction: ltr;" border="0" cellpadding="8" cellspacing="0" width="100%"><tbody><tr>
+        <td class="smalltext" style="padding-top: 4px; direction: ltr;">
+          <a title="Learn more about Google Docs &amp; Spreadsheets" class="smalllink" href="https://docs.google.com/">Google Docs &amp; Spreadsheets -- Web word processing and spreadsheets.</a>
+        </td>
+        <td class="smalltext" style="padding-top: 4px; direction: ltr;" align="right">
+          <!-- a class=smalllink target=_blank href="http://digg.com/submit?phase=2&url=http%3A%2F%2Fdocs.google.com%2FDoc%3Fid%3Ddfd4dds3_3n66xt9"><b>Digg this</b></a><span class=graytext> | </span -->
 
-<li>Antwrap includes a conversion script to take an existing Ant build file and convert it to a rake file. It will
-convert each Ant Target into a JRake task. It will also convert each and every Any Task into an Antwrap method call.
-Ant tasks that conflict with Ruby keywords are prepended with an
-underscore (see above).
+          
+            <a title="Edit this page" onclick="if (self.parent.frames.length != 0) { self.parent.location = GetMashedURL('Edit', '?tab=edit&dr=true&docid=dfd4dds3_3n66xt9'); return false; }" class="smalllink" href="https://docs.google.com/Edit?tab=edit&amp;dr=true&amp;docid=dfd4dds3_3n66xt9">Edit this page (you have permission)</a>
+          
+        </td>
+      </tr></tbody></table>
+    </td></tr>
+  </tbody></table>
+	  
 
-</li>
-<li>Antwrap is a Beta release. I'd love any feedback you can provide on your experence with it.
-There are no 3rd party jars required other than the Ant jar files in your Classpath. Antwrap will run 
-on both the Ruby and the JRuby platforms. The Ruby gem requires the Ruby Java Bridge (RJG) gem
-in order to instantiate Java objects. 
-</li></pre>
 
-</ul>
-<a href='http://rubyforge.org/projects/antwrap/'>Project Info</a><br/>
-<a href='http://buildr.rubyforge.org/'>Buildr</a><br/>
-<a href='http://rubyforge.org/projects/raven/'>Raven</a><br/>
-Comments or Questions? <br/>
+<script src="index_files/urchin.js" type="text/javascript"></script>
 
-Caleb Powell <br>
-caleb.powell@gmail.com <br>
 
-</body>
-</html>
+<script type="text/javascript">
+  
+  _uacct="UA-18065-1";
+  _uanchor=1;
+  urchinTracker();
+  
+</script>
+
+</body></html>
