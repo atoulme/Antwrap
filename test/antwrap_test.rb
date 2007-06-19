@@ -235,6 +235,16 @@ class AntwrapTest < Test::Unit::TestCase
     end
   end
   
+  def test_declarative
+    @ant = AntProject.new({:declarative=>false,:loglevel=>Logger::DEBUG, :ant_home => @ant_home})
+    echo = @ant.echo(:message => "Echo")
+    assert_not_nil(echo)
+
+    @ant = AntProject.new({:declarative=>true,:loglevel=>Logger::DEBUG, :ant_home => @ant_home})
+    echo = @ant.echo(:message => "Echo")
+    assert_nil(echo)
+  end
+    
   private 
   def assert_exists(file_path)
     assert(File.exists?(file_path), "Does not exist[#{file_path}]")
