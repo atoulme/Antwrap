@@ -2,7 +2,7 @@
 #
 # Copyright Caleb Powell 2007
 #
-# Licensed under the LGPL, see the file COPYING in the distribution
+# Licensed under the LGPL, see the file README.txt in the distribution
 #
 
 require 'test/unit'
@@ -22,7 +22,7 @@ class AntwrapTest < Test::Unit::TestCase
 #    @ant_home = "/Users/caleb/tools/apache-ant-1.5.4"
     @ant_proj_props = {:name=>"testProject", :basedir=>FileUtils::pwd, :declarative=>true, 
                         :logger=>Logger.new(STDOUT), :loglevel=>Logger::DEBUG, :ant_home => @ant_home}
-    @ant = AntProject.new(@ant_proj_props)
+    @ant = AntWrap::AntProject.new(@ant_proj_props)
     
     if File.exists?(@output_dir)
       FileUtils.remove_dir(@output_dir)
@@ -33,7 +33,7 @@ class AntwrapTest < Test::Unit::TestCase
   def test_antproject_init
     @ant_proj_props = {:name=>"testProject", :declarative=>true, 
                         :logger=>Logger.new(STDOUT), :loglevel=>Logger::ERROR}
-    ant_proj = AntProject.new(@ant_proj_props)
+    ant_proj = AntWrap::AntProject.new(@ant_proj_props)
     assert(@ant_proj_props[:name] == ant_proj.name())
 #    assert(FileUtils::pwd == ant_proj.basedir())
     assert(@ant_proj_props[:declarative] == ant_proj.declarative())
@@ -236,11 +236,11 @@ class AntwrapTest < Test::Unit::TestCase
   end
   
   def test_declarative
-    @ant = AntProject.new({:declarative=>false,:loglevel=>Logger::DEBUG, :ant_home => @ant_home})
+    @ant = AntWrap::AntProject.new({:declarative=>false,:loglevel=>Logger::DEBUG, :ant_home => @ant_home})
     echo = @ant.echo(:message => "Echo")
     assert_not_nil(echo)
 
-    @ant = AntProject.new({:declarative=>true,:loglevel=>Logger::DEBUG, :ant_home => @ant_home})
+    @ant = AntWrap::AntProject.new({:declarative=>true,:loglevel=>Logger::DEBUG, :ant_home => @ant_home})
     echo = @ant.echo(:message => "Echo")
     assert_nil(echo)
   end

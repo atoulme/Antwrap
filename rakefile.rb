@@ -2,7 +2,7 @@
 #
 # Copyright Caleb Powell 2007
 #
-# Licensed under the LGPL, see the file COPYING in the distribution
+# Licensed under the LGPL, see the file README.txt in the distribution
 #
 require 'rubygems'
 Gem::manage_gems
