@@ -1,9 +1,15 @@
-# antwrap
+# Copyright 2008 Caleb Powell 
+# Licensed under the Apache License, Version 2.0 (the "License"); 
+# you may not use this file except in compliance with the License. 
+# You may obtain a copy of the License at 
 #
-# Copyright Caleb Powell 2007
-#
-# Licensed under the LGPL, see the file README.txt in the distribution
-#
+#   http://www.apache.org/licenses/LICENSE-2.0 
+# 
+# Unless required by applicable law or agreed to in writing, software 
+# distributed under the License is distributed on an "AS IS" BASIS, 
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+# See the License for the specific language governing permissions and limitations 
+# under the License.
 
 require 'test/unit'
 require 'fileutils'
@@ -22,7 +28,7 @@ class AntwrapTest < Test::Unit::TestCase
 #    @ant_home = "/Users/caleb/tools/apache-ant-1.5.4"
     @ant_proj_props = {:name=>"testProject", :basedir=>FileUtils::pwd, :declarative=>true, 
                         :logger=>Logger.new(STDOUT), :loglevel=>Logger::DEBUG, :ant_home => @ant_home}
-    @ant = AntWrap::AntProject.new(@ant_proj_props)
+    @ant = Antwrap::AntProject.new(@ant_proj_props)
     
     if File.exists?(@output_dir)
       FileUtils.remove_dir(@output_dir)
@@ -33,7 +39,7 @@ class AntwrapTest < Test::Unit::TestCase
   def test_antproject_init
     @ant_proj_props = {:name=>"testProject", :declarative=>true, 
                         :logger=>Logger.new(STDOUT), :loglevel=>Logger::ERROR}
-    ant_proj = AntWrap::AntProject.new(@ant_proj_props)
+    ant_proj = Antwrap::AntProject.new(@ant_proj_props)
     assert(@ant_proj_props[:name] == ant_proj.name())
 #    assert(FileUtils::pwd == ant_proj.basedir())
     assert(@ant_proj_props[:declarative] == ant_proj.declarative())
@@ -236,11 +242,11 @@ class AntwrapTest < Test::Unit::TestCase
   end
   
   def test_declarative
-    @ant = AntWrap::AntProject.new({:declarative=>false,:loglevel=>Logger::DEBUG, :ant_home => @ant_home})
+    @ant = Antwrap::AntProject.new({:declarative=>false,:loglevel=>Logger::DEBUG, :ant_home => @ant_home})
     echo = @ant.echo(:message => "Echo")
     assert_not_nil(echo)
 
-    @ant = AntWrap::AntProject.new({:declarative=>true,:loglevel=>Logger::DEBUG, :ant_home => @ant_home})
+    @ant = Antwrap::AntProject.new({:declarative=>true,:loglevel=>Logger::DEBUG, :ant_home => @ant_home})
     echo = @ant.echo(:message => "Echo")
     assert_nil(echo)
   end
