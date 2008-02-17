@@ -23,9 +23,9 @@ def apply_default_hoe_properties(hoe)
   hoe.email = 'caleb.powell@gmail.com'
   hoe.url = 'http://rubyforge.org/projects/antwrap/'
   hoe.summary = 'A Ruby module that wraps the Apache Ant build tool. Antwrap can be used to invoke Ant Tasks from a Ruby or a JRuby script.'
-  #hoe.description = hoe.paragraphs_of('README.txt', 2..5).join("\n\n")
+  hoe.description = hoe.paragraphs_of('README.txt', 2..5).join("\n\n")
   hoe.changes = hoe.paragraphs_of('History.txt', 0..1).join("\n\n")
-  puts "Current changes in this release: "
+  puts "Current changes in this release_______________ "
   puts "#{hoe.changes}"
   puts "----------------------------------------------"
 end
