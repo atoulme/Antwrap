@@ -28,5 +28,5 @@ module Antwrap
     autoload :XmlOrg, 'rjb_modules.rb'
   end
   
-  VERSION = "0.7"
+  VERSION = "0.7.0"
 end
