@@ -15,6 +15,7 @@ $LOAD_PATH.push(FileUtils::pwd + '/lib')
 require 'rubygems'
 require 'hoe'
 require './lib/antwrap.rb'
+require 'rake/testtask'
 
 def apply_default_hoe_properties(hoe)
   hoe.remote_rdoc_dir = ''
@@ -41,45 +42,8 @@ Hoe.new('Antwrap', Antwrap::VERSION) do |hoe|
   apply_default_hoe_properties hoe
   hoe.spec_extras = {:platform => 'java'}
 end
-#Gem::manage_gems
-#require 'rake/gempackagetask'
-#
-#def create_spec(spec, platform)
-#  spec.name          = 'Antwrap'
-#  spec.version       = '0.6.0'
-#  spec.author        = 'Caleb Powell'
-#  spec.email         = 'caleb.powell@gmail.com'
-#  spec.homepage      = 'http://rubyforge.org/projects/antwrap/'
-#  spec.platform      = platform
-#  spec.summary       = "A Ruby module that wraps the Apache Ant build tool, enabling Ant Tasks to be invoked from a Ruby/JRuby scripts."
-#  candidates      = Dir.glob("{lib,test,docs}/**/*")
-#  spec.files         = candidates.delete_if do |item|
-#    item.include?(".svn") || item.include?("apache-ant-1.7.0")
-#  end
-#  spec.require_path  = 'lib'
-#  spec.autorequire   = 'antwrap'
-#  spec.test_file     = 'test/antwrap_test.rb'
-#  spec.has_rdoc      = true
-#  spec.extra_rdoc_files  = ['README', 'COPYING']
-#end        
-#
-#jruby_spec = Gem::Specification.new do |spec| 
-#  create_spec(spec, 'java')
-#end
-#
-#ruby_spec = Gem::Specification.new do |spec| 
-#  create_spec(spec, Gem::Platform::RUBY) 
-#  spec.add_dependency("rjb", ">= 1.0.3")
-#end
-#
-#Rake::GemPackageTask.new(ruby_spec) do |pkg|
-#  puts "Creating Ruby Gem"
-#end
-#
-#Rake::GemPackageTask.new(jruby_spec) do |pkg|
-#  puts "Creating JRuby Gem"
-#end
 
-#task :gems => [:pkg => '/Antwrap-0.5.1.gem'] 
-
-
+Rake::TestTask.new('test') do |t|
+  t.ruby_opts = ['-r test/load_devcreek.rb']
+  t.test_files = ['test/*test.rb']
+end

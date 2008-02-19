@@ -15,18 +15,8 @@ require 'antwrap_utilities'
 require 'ant_project'
 require 'ant_task'
 module Antwrap
-  if(RUBY_PLATFORM == 'java')
-    require 'java'
-    autoload :ApacheAnt, 'jruby_modules.rb'
-    autoload :JavaLang, 'jruby_modules.rb'
-    autoload :XmlOrg, 'jruby_modules.rb'
-  else
-    require 'rubygems'
-    require 'rjb'
-    autoload :ApacheAnt, 'rjb_modules.rb'
-    autoload :JavaLang, 'rjb_modules.rb'
-    autoload :XmlOrg, 'rjb_modules.rb'
-  end
-  
+  autoload :ApacheAnt, 'ant_libraries.rb'
+  autoload :JavaLang, 'ant_libraries.rb'
+  autoload :XmlOrg, 'ant_libraries.rb'
   VERSION = "0.7.0"
 end

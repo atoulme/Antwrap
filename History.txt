@@ -1,9 +1,9 @@
-== 0.7 / 2008-02-16
+== 0.7.0 / 2008-02-16
 
 * Antwrap has been re-licensed under the Apache Software License. This was done to make Antwrap compatible with the Buildr project, and the Ant library.
 * All Antwrap classes and modules are now contained inside an 'Antwrap' module. 
 
-== 0.6 / 2007-06-18
+== 0.6.0 / 2007-06-18
 
 * The Antwrap syntax was changed. Blocks passed to a task are no longer evaluated within the context of the task itself. Instead, the AntProject itself will now yield
 to the block and pass itself as a parameter. While slightly more verbose, this is idiomatic Ruby and allows you to use objects and invoke methods that are not in the 
@@ -64,6 +64,6 @@ example: @ant = AntProject.new(:ant_home=>\"/Users/fooman/tools/apache-ant-1.7.0
 
 * Added support for Antcontrib tasks (those with reserved words such as if/else). The Antwrap convert script will prepend a task (that is a ruby reserved word) with an underscore.
 
-== 0.1 / 2007-01-20
+== 0.1.0 / 2007-01-20
 
 * Initial release of the Antwrap gem.

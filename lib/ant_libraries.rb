@@ -10,22 +10,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
 # See the License for the specific language governing permissions and limitations 
 # under the License.
-
+require 'java_adapter'
 module Antwrap
   module ApacheAnt
-    include_class "org.apache.tools.ant.DefaultLogger"
-    include_class "org.apache.tools.ant.Main"
-    include_class "org.apache.tools.ant.Project"
-    include_class "org.apache.tools.ant.RuntimeConfigurable"
-    include_class "org.apache.tools.ant.Target"
-    include_class "org.apache.tools.ant.UnknownElement"
+    DefaultLogger = JavaAdapter.import_class("org.apache.tools.ant.DefaultLogger")
+    Main = JavaAdapter.import_class("org.apache.tools.ant.Main")
+    Project = JavaAdapter.import_class("org.apache.tools.ant.Project")
+    RuntimeConfigurable = JavaAdapter.import_class("org.apache.tools.ant.RuntimeConfigurable")
+    Target = JavaAdapter.import_class("org.apache.tools.ant.Target")
+    UnknownElement = JavaAdapter.import_class("org.apache.tools.ant.UnknownElement")
   end
   
   module JavaLang
-    include_class "java.lang.System"
+    System = JavaAdapter.import_class("java.lang.System")
   end
   
   module XmlSax
-    include_class "org.xml.sax.helpers.AttributeListImpl"
+    AttributeListImpl = JavaAdapter.import_class("org.xml.sax.helpers.AttributeListImpl")
   end
 end

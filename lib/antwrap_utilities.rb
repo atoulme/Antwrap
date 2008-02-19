@@ -10,30 +10,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
 # See the License for the specific language governing permissions and limitations 
 # under the License.
-
+require 'java_adapter'
 module Antwrap
   module AntwrapClassLoader
-    
     require 'find'
     
     def match(*paths)
-      
       matched = Array.new 
       Find.find(*paths){ |path| matched << path if yield path }
       return matched
-      
     end
     
     def load_ant_libs(ant_home)
-      
       jars = match(ant_home + File::SEPARATOR + 'lib') {|p| ext = p[-4...p.size]; ext && ext.downcase == '.jar'} 
-      
-      if(RUBY_PLATFORM == 'java')
-        jars.each {|jar| require jar }
-      else
-        Rjb::load(jars.join(File::PATH_SEPARATOR), [])
-      end
-      
+      Antwrap::JavaAdapter.load(jars)
     end
     
     module_function :match, :load_ant_libs
