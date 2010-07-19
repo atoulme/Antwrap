@@ -15,7 +15,7 @@ module Antwrap
   module JavaAdapter
     
     def is_jruby_interpreter?
-      return RUBY_PLATFORM == 'java'
+      return RUBY_PLATFORM =~ /java/
     end
 
     def import_class(name)
