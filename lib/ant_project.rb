@@ -102,7 +102,7 @@ module Antwrap
         
         parent_task.add(task) if parent_task
         
-        if @task_stack.nitems == 1 
+        if @task_stack.size == 1 
           if declarative == true
             @logger.debug("Executing #{task}")
             task.execute 
