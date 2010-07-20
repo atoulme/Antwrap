@@ -32,13 +32,13 @@ def apply_default_hoe_properties(hoe)
 end
 
 #builds the MRI Gem
-Hoe.new('Antwrap', Antwrap::VERSION) do |hoe|
+Hoe.new('atoulme-Antwrap', Antwrap::VERSION) do |hoe|
   apply_default_hoe_properties hoe
   hoe.extra_deps << ["rjb", ">= 1.0.3"]
 end
 
 #builds the JRuby Gem
-Hoe.new('Antwrap', Antwrap::VERSION) do |hoe|
+Hoe.new('atoulme-Antwrap', Antwrap::VERSION) do |hoe|
   apply_default_hoe_properties hoe
   hoe.spec_extras = {:platform => 'java'}
 end
