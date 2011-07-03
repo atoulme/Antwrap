@@ -90,8 +90,8 @@ module Antwrap
       
     end
     
-    def java(*args)
-      method_missing(:java, *args)
+    def java(*args, &block)
+      method_missing(:java, *args, &block)
     end
 
     def method_missing(sym, *args)
