@@ -117,7 +117,7 @@ module Antwrap
         end
         
       rescue
-        @logger.error("Error instantiating '#{sym.to_s}' task: " + $!)
+        @logger.error("Error instantiating '#{sym.to_s}' task: " + $!.to_s)
         raise
       ensure
         @task_stack.pop
