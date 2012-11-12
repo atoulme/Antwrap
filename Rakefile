@@ -22,23 +22,24 @@ def apply_default_hoe_properties(hoe)
   hoe.rubyforge_name = 'antwrap'
   hoe.author = 'Caleb Powell'
   hoe.email = 'caleb.powell@gmail.com'
-  hoe.url = 'http://rubyforge.org/projects/antwrap/'
+  hoe.urls = ['http://rubyforge.org/projects/antwrap/']
   hoe.summary = 'A Ruby module that wraps the Apache Ant build tool. Antwrap can be used to invoke Ant Tasks from a Ruby or a JRuby script.'
   hoe.description = hoe.paragraphs_of('README.txt', 2..5).join("\n\n")
   hoe.changes = hoe.paragraphs_of('History.txt', 0..1).join("\n\n")
+  hoe.version = Antwrap::VERSION
   puts "Current changes in this release_______________ "
   puts "#{hoe.changes}"
   puts "----------------------------------------------"
 end
 
 #builds the MRI Gem
-Hoe.new('atoulme-Antwrap', Antwrap::VERSION) do |hoe|
+Hoe.spec('atoulme-Antwrap') do |hoe|
   apply_default_hoe_properties hoe
   hoe.extra_deps << ["rjb", ">= 1.0.3"]
 end
 
 #builds the JRuby Gem
-Hoe.new('atoulme-Antwrap', Antwrap::VERSION) do |hoe|
+Hoe.spec('atoulme-Antwrap') do |hoe|
   apply_default_hoe_properties hoe
   hoe.spec_extras = {:platform => 'java'}
 end
