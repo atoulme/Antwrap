@@ -18,5 +18,5 @@ module Antwrap
   autoload :ApacheAnt, 'ant_libraries.rb'
   autoload :JavaLang, 'ant_libraries.rb'
   autoload :XmlOrg, 'ant_libraries.rb'
-  VERSION = "0.7.3"
+  VERSION = "0.7.4"
 end
