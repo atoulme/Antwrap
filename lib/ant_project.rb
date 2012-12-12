@@ -43,9 +43,7 @@ module Antwrap
     end
     
     public
-    attr :project, false
-    attr :ant_version, false
-    attr_accessor(:declarative, :logger)
+    attr_accessor(:project, :ant_version, :declarative, :logger)
     
     # Create an AntProject. Parameters are specified via a hash:
     # :ant_home=><em>Ant basedir</em>
