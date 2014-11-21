@@ -45,7 +45,7 @@ module Antwrap
     
     private    
     def JavaAdapter.import_using_jruby(name)
-      include_class(name) 
+      java_import(name) 
       return remove_const(name.scan(/[_a-zA-Z0-9$]+/).last)
     end
   end
