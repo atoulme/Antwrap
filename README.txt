@@ -117,7 +117,7 @@
 == REQUIREMENTS:
 
 	rjb >= 1.0.3 (on MRI Ruby)
-	hoe >= 1.3.0
+	hoe >= 3.14.2
 
 == INSTALL:
 
