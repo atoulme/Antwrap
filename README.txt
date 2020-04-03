@@ -1,6 +1,6 @@
 = Antwrap
     by Caleb Powell
-    http://rubyforge.org/projects/antwrap/
+    https://github.com/atoulme/Antwrap
 
 == DESCRIPTION:
 
@@ -9,12 +9,12 @@
 == FEATURES/PROBLEMS:
 
 	Antwrap runs on the native Ruby interpreter via the RJB (Ruby Java Bridge gem) and on the JRuby interpreter. Antwrap is compatible with Ant versions 1.5.4, 
-	1.6.5 and 1.7.0. For more information, 	see the Project Info (http://rubyforge.org/projects/antwrap/) page. 
+	1.6.5 and 1.7.0. For more information, 	see the Project Info (https://github.com/atoulme/Antwrap) page. 
 	 
 == SYNOPSIS:
 
-	Antwrap is a Ruby library that can be used to invoke Ant tasks. It is being used in the Buildr (http://incubator.apache.org/buildr/) project to execute 
-	Ant (http://ant.apache.org/) tasks in a Java project. If you are tired of fighting with Ant or Maven XML files in your Java project, take some time to 
+	Antwrap is a Ruby library that can be used to invoke Ant tasks. It is being used in the Buildr (https://buildr.apache.org/) project to execute 
+	Ant (https://ant.apache.org/) tasks in a Java project. If you are tired of fighting with Ant or Maven XML files in your Java project, take some time to 
 	check out Buildr!
 
 == USAGE:
@@ -117,7 +117,7 @@
 == REQUIREMENTS:
 
 	rjb >= 1.0.3 (on MRI Ruby)
-	hoe >= 1.3.0
+	hoe >= 3.14.2
 
 == INSTALL:
 
