@@ -30,7 +30,7 @@ class AntwrapTest < Test::Unit::TestCase
                         :logger=>Logger.new(STDOUT), :loglevel=>Logger::DEBUG, :ant_home => @ant_home}
     @ant = Antwrap::AntProject.new(@ant_proj_props)
     
-    if File.exists?(@output_dir)
+    if File.exist?(@output_dir)
       FileUtils.remove_dir(@output_dir)
     end
     FileUtils.mkdir(@output_dir, :mode => 0775)
@@ -253,10 +253,10 @@ class AntwrapTest < Test::Unit::TestCase
     
   private 
   def assert_exists(file_path)
-    assert(File.exists?(file_path), "Does not exist[#{file_path}]")
+    assert(File.exist?(file_path), "Does not exist[#{file_path}]")
   end
   
   def assert_absent(file_path)
-    assert(!File.exists?(file_path), "Should not exist[#{file_path}]")
+    assert(!File.exist?(file_path), "Should not exist[#{file_path}]")
   end
 end
