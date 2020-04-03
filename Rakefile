@@ -22,6 +22,7 @@ def apply_default_hoe_properties(hoe)
   hoe.group_name = 'antwrap'
   hoe.author = 'Caleb Powell'
   hoe.email = 'caleb.powell@gmail.com'
+  hoe.licenses = ['apache-2.0']
   hoe.urls = { 'home' => 'http://rubyforge.org/projects/antwrap/' }
   hoe.summary = 'A Ruby module that wraps the Apache Ant build tool. Antwrap can be used to invoke Ant Tasks from a Ruby or a JRuby script.'
   hoe.description = hoe.paragraphs_of('README.txt', 2..5).join("\n\n")
